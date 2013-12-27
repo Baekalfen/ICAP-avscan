@@ -10,6 +10,19 @@ public class Tester {
 
             ICAP.scanResult[] results = new ICAP.scanResult[5];
 
+            String[] files = new String[]{
+                "/Users/mads/Downloads/Flux.zip"
+            };
+            
+            for(String file : files) {
+                try {
+                    boolean result = icap.scanFile2(file);
+                    System.out.println(file + ": "+ result);
+                } catch (Exception ex) {
+                    System.err.println("Could not scan file " + file + ":" + ex.getMessage());
+                }
+            }
+            
             int i=0;
             results[i] = icap.scanFile("/Users/mads/Downloads/Flux.zip");i++;
             //results[i] = icap.scanFile("/home/mads/Downloads/eicar.com.txt");i++;
@@ -22,7 +35,6 @@ public class Tester {
                 System.out.println(value);
             }
 
-            icap.disconnect();
         }
         catch(IOException e){
             System.out.println(e.getMessage());
