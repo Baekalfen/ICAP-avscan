@@ -39,6 +39,7 @@ class ICAP {
         serverIP = s;
         port = p;        
         //Initialize connection
+        // FIXME: Remove all output to the console
         System.out.println("Connecting to " + serverIP + " on port " + port);
         client = new Socket(serverIP, port);
         System.out.println("Succesfully connected to: " + client.getRemoteSocketAddress());
@@ -51,6 +52,8 @@ class ICAP {
         //Openening in stream
         InputStream inFromServer = client.getInputStream();
         in = new DataInputStream(inFromServer);
+        
+        //FIXME: Call getOptions and set sane defaults
     }
     
     private String getHeader(Socket client,DataInputStream in,int maxLength) throws IOException{
@@ -59,8 +62,9 @@ class ICAP {
 
         int n=0;
         int offset=0;
+        // FIXME: What is the max size we want to read? fx. 8K, 16K
         while((n = in.read(response, offset++, 1)) != -1) {
-            if (offset>5){
+            if (offset>5){ // FIXME: Will we find anything after 5 or is this number higher
                 byte[] lastBytes = Arrays.copyOfRange(response, offset-4, offset);
                 if (Arrays.equals(endofheader,lastBytes)){
                     String temp = new String(response,0,offset, StandardCharsetsUTF8);
@@ -68,6 +72,7 @@ class ICAP {
                 }
             }
         }
+        // FIXME: Remove all output to the console, throw exception
         System.out.println("\nHeader NOT recieved.");
         return null; // Fixme! Find a way around 'missing return statement'
     }
@@ -89,6 +94,7 @@ class ICAP {
                 }
             }
         }
+        // FIXME: Remove all output to the console, throw exception
         System.out.println("\nHTTP response NOT recieved.");
         return null; // Fixme! Find a way around 'missing return statement'
     }
@@ -118,6 +124,16 @@ class ICAP {
         return getHeader(client,in,8192);
     }
 
+    /**
+     * 
+     * @param filename
+     * @return Returns true when no infection is found
+     */
+    public boolean scanFile2(String filename) throws ICAPException {
+        throw new ICAPException("Could not connect to server");
+        //return true;
+    }
+    
     public scanResult scanFile(String filename){
         try{
             FileInputStream fileInStream;
@@ -153,6 +169,7 @@ class ICAP {
             int i=0;
             byte[] chunk= new byte[1024];
 
+            //FIXME: Always read in large chunks, each call is a context switch rs = fs.read(chunk, 0, 1024);
             while ((content = fileInStream.read()) != -1 && i!=previewSize) {
                 chunk[i] = (byte) content;
                 i++;
@@ -191,6 +208,7 @@ class ICAP {
                 //Sending remaining part of file
             i=0;
             if (fileSize>previewSize){
+                 //FIXME: Always read in large chunks, each call is a context switch rs = fs.read(chunk, 0, 1024);
                 while ((content = fileInStream.read()) != -1) {
                     chunk[i] = (byte) content;
                         //System.out.print((char) content);
@@ -222,10 +240,13 @@ class ICAP {
             String status=responseMap.get("StatusCode");
             if (status != null && status.equals("200") || status.equals("204")){
                 String infect;
+                // FIXME: Change this to check for encapsulated instead of infected
                 if ((infect = responseMap.get("X-Infection-Found")) != null){
                     //System.out.println("Virus found: "+infect);
                     // MAYBE NOT UNIVERSAL:
-                    getHTTPResponse(client, in, 8192);
+                    getHTTPResponse(client, in, 8192); // FIXME: Read the HTTP status code and see if it's access denied(401) or 500, etc.
+                    
+                    // FIXME: Find out if this is true or false
                     return scanResult.DISALLOWED;
                 }
                 else{
@@ -234,23 +255,31 @@ class ICAP {
                 }
             }
         }
+        // FIXME: Do we need to handle exceptions here or should we let them pass?
         catch(IOException e){
             return scanResult.ERROR;
         }
         return scanResult.ERROR;
     }
 
+    /**
+     * 
+     * @param response
+     * @return 
+     */
     public Map<String,String> parseHeader(String response){
         Map<String,String> headers = new HashMap<String, String>();
         
+        //FIXME: Add some documentation and a sample response
+        // Read status code
         int x = response.indexOf(" ",0);
         int y = response.indexOf(" ",x+1);
         String statusCode = response.substring(x+1,y);
         headers.put("StatusCode", statusCode);
         
+        // Read headers
         int i = response.indexOf("\r\n",y);
         i+=2;
-        
         while (i+2!=response.length()) {
             int n = response.indexOf(":",i);
             String key = response.substring(i, n);
@@ -267,6 +296,17 @@ class ICAP {
     }
     
     public void disconnect() throws IOException{
-        client.close();
+        if(client != null) {
+            client.close();
+        }
+    }
+    
+    @Override
+    protected void finalize() throws Throwable {
+        try {
+            disconnect();        // close open files
+        } finally {
+            super.finalize();
+        }
     }
 }
