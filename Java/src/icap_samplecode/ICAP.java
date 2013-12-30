@@ -29,9 +29,12 @@ class ICAP {
 
     private int stdPreviewSize = 1024;
     private final int stdRecieveLength = 8192;
+    
+    private final String ICAPTERMINATOR = "\r\n\r\n";
+    private final String HTTPTERMINATOR = "0\r\n\r\n";
 
     /**
-     * Initializes the socket connection and IO streams. It askes the server for the available options and
+     * Initializes the socket connection and IO streams. It asks the server for the available options and
      * changes settings to match it.
      * @param s The IP address to connect to.
      * @param p The port in the host to use.
@@ -85,15 +88,16 @@ class ICAP {
      * @throws IOException
      * @throws ICAPException 
      */
-    private String getHeader(int maxLength) throws IOException, ICAPException{
-        byte[] endofheader = new byte[] {'\r','\n','\r','\n'};
-        byte[] response = new byte[maxLength];
+    private String getHeader(String terminator) throws IOException, ICAPException{
+        byte[] endofheader = terminator.getBytes(StandardCharsetsUTF8);//new byte[] {'\r','\n','\r','\n'};
+        byte[] response = new byte[stdRecieveLength];
 
         int n=0;
         int offset=0;
-        while(((n = in.read(response, offset++, 1)) != -1) && offset < maxLength) {
+        while(((n = in.read(response, offset, stdRecieveLength - offset)) != -1) && (offset < stdRecieveLength)) {
+            offset += n;
             if (offset>endofheader.length+13){ // 13 is the smallest possible message "ICAP/1.0 xxx "
-                byte[] lastBytes = Arrays.copyOfRange(response, offset-4, offset);
+                byte[] lastBytes = Arrays.copyOfRange(response, offset-endofheader.length, offset);
                 if (Arrays.equals(endofheader,lastBytes)){
                     String temp = new String(response,0,offset, StandardCharsetsUTF8);
                     return temp;
@@ -101,32 +105,6 @@ class ICAP {
             }
         }
         throw new ICAPException("Header NOT recieved.");
-    }
-    
-    /**
-     * Receive an expected HTTP header as response of a request. The returned String
-     * should NOT be parsed with parseHeader() as the HTTP response also contain a HTML webpage.
-     * @param maxLength
-     * @return String of the raw response
-     * @throws IOException
-     * @throws ICAPException 
-     */
-    private String getHTTPResponse(int maxLength) throws IOException, ICAPException{
-        byte[] endofheader = new byte[] {'0','\r','\n','\r','\n'};
-        byte[] response = new byte[maxLength];
-
-        int n=0;
-        int offset=0;
-        while((n = in.read(response, offset++, 1)) != -1) {
-            if (offset>endofheader.length+13){ // 13 is the smallest possible message "HTTP/1.0 xxx "
-                byte[] lastBytes = Arrays.copyOfRange(response, offset-5, offset);
-                if (Arrays.equals(endofheader,lastBytes)){
-                    String temp = new String(response,0,offset, StandardCharsetsUTF8);
-                    return temp;
-                }
-            }
-        }
-        throw new ICAPException("HTTP response NOT recieved.");
     }
     
     /**
@@ -150,7 +128,7 @@ class ICAP {
     }
     
     /**
-     * Automaticly asks for the servers available options and returns the raw response as a String.
+     * Automatically asks for the servers available options and returns the raw response as a String.
      * @return String of the servers response.
      * @throws IOException
      * @throws ICAPException 
@@ -167,7 +145,7 @@ class ICAP {
 
         sendString(requestHeader);
 
-        return getHeader(stdRecieveLength);
+        return getHeader(ICAPTERMINATOR);
     }
 
     /**
@@ -223,7 +201,7 @@ class ICAP {
             // if fileSize<previewSize, then this is acutally the respond
             // otherwise it is a "go" for the rest of the file.
         if (fileSize>previewSize){
-            String parseMe = getHeader(stdRecieveLength);
+            String parseMe = getHeader(ICAPTERMINATOR);
             Map<String,String> responseMap = parseHeader(parseMe);
 
             if (responseMap.get("StatusCode") != null){
@@ -254,16 +232,16 @@ class ICAP {
         fileInStream.close();
 
         Map<String,String> responseMap;
-        String response = getHeader(stdRecieveLength);
+        String response = getHeader(ICAPTERMINATOR);
         responseMap = parseHeader(response);
 
         String status=responseMap.get("StatusCode");
-        if (status != null && status.equals("200") || status.equals("204")){
+        if (status != null && (status.equals("200") || status.equals("204"))){
             if (status.equals("204")){return true;} //Unmodified
 
             if (status.equals("200")){ //OK
-                response = getHTTPResponse(stdRecieveLength);
-                //response = getHeader(stdRecieveLength);
+                response = getHeader(HTTPTERMINATOR);
+                //response = getHeader(ICAPTERMINATOR);
                 int x = response.indexOf(" ",0);
                 int y = response.indexOf(" ",x+1);
                 String statusCode = response.substring(x+1,y);
@@ -274,6 +252,7 @@ class ICAP {
         }
         throw new ICAPException("Unrecognized or no status code in response header.");
     }
+    
     /**
      * Given a raw response header as a String, it will parse through it and return a HashMap of the result
      * @param response A raw response header as a String.
