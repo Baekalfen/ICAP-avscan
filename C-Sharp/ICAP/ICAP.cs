@@ -211,7 +211,7 @@ namespace ICAPNameSpace
             byte[] endofheader = System.Text.Encoding.UTF8.GetBytes(terminator);
             int offset = 0;
             int n = 0;
-            while (((n = sender.Receive(buffer, offset, stdRecieveLength - offset, SocketFlags.None)) != 0) && !(offset>stdRecieveLength)) // last part is to secure against DDOS
+            while (((n = sender.Receive(buffer, offset, stdRecieveLength - offset, SocketFlags.None)) != 0) && (offset < stdRecieveLength)) // last part is to secure against DDOS
             {
                 offset += n;
                 if (offset > endofheader.Length + 13) // 13 is the smallest possible message (ICAP/1.0 xxx\r\n) or (HTTP/1.0 xxx\r\n)
