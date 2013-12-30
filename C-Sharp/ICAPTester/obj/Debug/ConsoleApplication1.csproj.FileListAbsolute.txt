@@ -1,0 +1,17 @@
+C:\Users\Mads\Documents\GitHub\ConsoleApplication1\bin\Debug\ConsoleApplication1.exe.config
+C:\Users\Mads\Documents\GitHub\ConsoleApplication1\bin\Debug\ConsoleApplication1.exe
+C:\Users\Mads\Documents\GitHub\ConsoleApplication1\bin\Debug\ConsoleApplication1.pdb
+C:\Users\Mads\Documents\GitHub\ConsoleApplication1\obj\Debug\ConsoleApplication1.exe
+C:\Users\Mads\Documents\GitHub\ConsoleApplication1\obj\Debug\ConsoleApplication1.pdb
+C:\Users\Mads\Documents\GitHub\ConsoleApplication1\obj\Debug\ConsoleApplication1.csprojResolveAssemblyReference.cache
+C:\Users\Mads\Documents\GitHub\ConsoleApplication1\bin\Debug\ICAPNameSpace.dll
+C:\Users\Mads\Documents\GitHub\ConsoleApplication1\bin\Debug\ICAPNameSpace.pdb
+C:\Users\Mads\Documents\GitHub\ICAP-avscan\C-Sharp\ConsoleApplication1\bin\Debug\ConsoleApplication1.exe.config
+C:\Users\Mads\Documents\GitHub\ICAP-avscan\C-Sharp\ConsoleApplication1\obj\Debug\ConsoleApplication1.exe
+C:\Users\Mads\Documents\GitHub\ICAP-avscan\C-Sharp\ConsoleApplication1\obj\Debug\ConsoleApplication1.pdb
+C:\Users\Mads\Documents\GitHub\ICAP-avscan\C-Sharp\ConsoleApplication1\bin\Debug\ConsoleApplication1.exe
+C:\Users\Mads\Documents\GitHub\ICAP-avscan\C-Sharp\ConsoleApplication1\bin\Debug\ConsoleApplication1.pdb
+C:\Users\Mads\Documents\GitHub\ICAP-avscan\C-Sharp\ConsoleApplication1\bin\Debug\ICAPNameSpace.dll
+C:\Users\Mads\Documents\GitHub\ICAP-avscan\C-Sharp\ConsoleApplication1\bin\Debug\ICAPNameSpace.pdb
+C:\Users\Mads\Documents\GitHub\ICAP-avscan\C-Sharp\ConsoleApplication1\obj\Debug\ConsoleApplication1.csprojResolveAssemblyReference.cache
+C:\Users\Mads\Documents\GitHub\ICAP-avscan\C-Sharp\ConsoleApplication1\bin\Debug\ICAPTester.exe.config

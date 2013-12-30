@@ -1,0 +1,8 @@
+C:\Users\Mads\Documents\GitHub\ICAP-avscan\C-Sharp\ICAPTester\bin\Debug\ICAPTester.exe.config
+C:\Users\Mads\Documents\GitHub\ICAP-avscan\C-Sharp\ICAPTester\bin\Debug\ICAPTester.exe
+C:\Users\Mads\Documents\GitHub\ICAP-avscan\C-Sharp\ICAPTester\bin\Debug\ICAPTester.pdb
+C:\Users\Mads\Documents\GitHub\ICAP-avscan\C-Sharp\ICAPTester\bin\Debug\ICAPNameSpace.dll
+C:\Users\Mads\Documents\GitHub\ICAP-avscan\C-Sharp\ICAPTester\bin\Debug\ICAPNameSpace.pdb
+C:\Users\Mads\Documents\GitHub\ICAP-avscan\C-Sharp\ICAPTester\obj\Debug\ICAPTester.csprojResolveAssemblyReference.cache
+C:\Users\Mads\Documents\GitHub\ICAP-avscan\C-Sharp\ICAPTester\obj\Debug\ICAPTester.exe
+C:\Users\Mads\Documents\GitHub\ICAP-avscan\C-Sharp\ICAPTester\obj\Debug\ICAPTester.pdb
