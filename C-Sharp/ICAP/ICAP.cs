@@ -3,20 +3,21 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Threading;
 using System.Net;
 using System.Net.Sockets;
 using System.IO;
 
 namespace ICAPNameSpace
 {
-    public class ICAP
+    public class ICAP : IDisposable
     {
         private String serverIP;
         private int port;
 
         private String icapService;
         private const String VERSION = "1.0";
-        private const String USERAGENT = "IT-Kartellet ICAP Client/0.9";
+        private const String USERAGENT = "IT-Kartellet ICAP Client/1.0";
         private const String ICAPTERMINATOR = "\r\n\r\n";
         private const String HTTPTERMINATOR = "0\r\n\r\n";
 
@@ -27,7 +28,6 @@ namespace ICAPNameSpace
         private byte[] buffer = new byte[8192];
 
         private Socket sender;
-
 
         private String tempString;
         /**
@@ -51,8 +51,8 @@ namespace ICAPNameSpace
 
             // Create a TCP/IP  socket.
             sender = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            sender.Connect(remoteEP);            
-            
+            sender.Connect(remoteEP);
+
             String parseMe = getOptions();
             Dictionary<string, string> responseMap = parseHeader(parseMe);
 
@@ -78,118 +78,139 @@ namespace ICAPNameSpace
             }
         }
 
+        public ICAP(String serverIP, int port, String icapService, int previewSize)
+        {
+            this.icapService = icapService;
+            this.serverIP = serverIP;
+            this.port = port;
+
+            //Initialize connection
+            IPAddress ipAddress = IPAddress.Parse(serverIP);
+            IPEndPoint remoteEP = new IPEndPoint(ipAddress, port);
+
+            // Create a TCP/IP  socket.
+            sender = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            sender.Connect(remoteEP);
+            stdPreviewSize = previewSize;
+        }
+
         public bool scanFile(String filepath)
         {
-            FileStream fileStream = new FileStream(filepath, FileMode.Open);
-            int fileSize = (int)fileStream.Length;
-
-            //First part of header
-            String resBody = "Content-Length: " + fileSize + "\r\n\r\n";
-
-            int previewSize = stdPreviewSize;
-            if (fileSize < stdPreviewSize)
+            using (FileStream fileStream = new FileStream(filepath, FileMode.Open))
             {
-                previewSize = fileSize;
-            }
+                int fileSize = (int)fileStream.Length;
 
-            byte[] requestBuffer = Encoding.ASCII.GetBytes(
-                "RESPMOD icap://" + serverIP + "/" + icapService + " ICAP/" + VERSION + "\r\n"
-                + "Host: " + serverIP + "\r\n"
-                + "User-Agent: " + USERAGENT + "\r\n"
-                + "Allow: 204\r\n"
-                + "Preview: " + previewSize + "\r\n"
-                + "Encapsulated: res-hdr=0, res-body=" + resBody.Length + "\r\n"
-                + "\r\n"
-                + resBody
-                + previewSize.ToString("X") + "\r\n");
+                //First part of header
+                String resBody = "Content-Length: " + fileSize + "\r\n\r\n";
 
-            sender.Send(requestBuffer);
+                int previewSize = stdPreviewSize;
+                if (fileSize < stdPreviewSize)
+                {
+                    previewSize = fileSize;
+                }
 
-            //Sending preview or, if smaller than previewSize, the whole file.
-            byte[] chunk = new byte[previewSize];
+                byte[] requestBuffer = Encoding.ASCII.GetBytes(
+                    "RESPMOD icap://" + serverIP + "/" + icapService + " ICAP/" + VERSION + "\r\n"
+                    + "Host: " + serverIP + "\r\n"
+                    + "User-Agent: " + USERAGENT + "\r\n"
+                    + "Allow: 204\r\n"
+                    + "Preview: " + previewSize + "\r\n"
+                    + "Encapsulated: res-hdr=0, res-body=" + resBody.Length + "\r\n"
+                    + "\r\n"
+                    + resBody
+                    + previewSize.ToString("X") + "\r\n");
 
-            fileStream.Read(chunk, 0, previewSize);
-            sender.Send(chunk);
-            sender.Send(Encoding.ASCII.GetBytes("\r\n"));
-            if (fileSize <= previewSize)
-            {
-                sender.Send(Encoding.ASCII.GetBytes("0; ieof\r\n\r\n"));
-            }
-            else
-            {
-                sender.Send(Encoding.ASCII.GetBytes("0\r\n\r\n"));
-            }
+                sender.Send(requestBuffer);
 
-            // Parse the response! It might not be "100 continue".
-            // if fileSize<previewSize, then the stream waiting is actually the allowed/disallowed signal
-            // otherwise it is a "go" for the rest of the file.
-            Dictionary<String, String> responseMap = new Dictionary<string,string>();
-            int status;
+                //Sending preview or, if smaller than previewSize, the whole file.
+                byte[] chunk = new byte[previewSize];
 
-            if (fileSize > previewSize)
-            {
-                String parseMe = getHeader(ICAPTERMINATOR);
-                responseMap = parseHeader(parseMe);
+                fileStream.Read(chunk, 0, previewSize);
+                sender.Send(chunk);
+                sender.Send(Encoding.ASCII.GetBytes("\r\n"));
+                if (fileSize <= previewSize)
+                {
+                    sender.Send(Encoding.ASCII.GetBytes("0; ieof\r\n\r\n"));
+                }
+                else
+                {
+                    sender.Send(Encoding.ASCII.GetBytes("0\r\n\r\n"));
+                }
+
+                // Parse the response! It might not be "100 continue".
+                // if fileSize<previewSize, then the stream waiting is actually the allowed/disallowed signal
+                // otherwise it is a "go" for the rest of the file.
+                Dictionary<String, String> responseMap = new Dictionary<string, string>();
+                int status;
+
+
+
+                if (fileSize > previewSize)
+                {
+                    //TODO: add timeout. It will hang if no response is recieved
+                    String parseMe = getHeader(ICAPTERMINATOR);
+                    responseMap = parseHeader(parseMe);
+
+                    responseMap.TryGetValue("StatusCode", out tempString);
+                    if (tempString != null)
+                    {
+                        status = Convert.ToInt16(tempString);
+
+                        switch (status)
+                        {
+                            case 100: break; //Continue transfer
+                            case 204: return true;
+                            case 404: throw new ICAPException("404: ICAP Service not found");
+                            default: throw new ICAPException("Server returned unknown status code:" + status);
+                        }
+                    }
+                }
+
+                //Sending remaining part of file
+                if (fileSize > previewSize)
+                {
+                    int offset = previewSize;
+                    int n;
+                    byte[] buffer = new byte[stdSendLength];
+                    while ((n = fileStream.Read(buffer, 0, stdSendLength)) > 0)
+                    {
+                        offset += n;  // offset for next reading
+                        sender.Send(Encoding.ASCII.GetBytes(buffer.Length.ToString("X") + "\r\n"));
+                        sender.Send(buffer);
+                        sender.Send(Encoding.ASCII.GetBytes("\r\n"));
+                    }
+                    //Closing file transfer.
+                    sender.Send(Encoding.ASCII.GetBytes("0\r\n\r\n"));
+                }
+                //fileStream.Close();
+
+                responseMap.Clear();
+                String response = getHeader(ICAPTERMINATOR);
+                responseMap = parseHeader(response);
 
                 responseMap.TryGetValue("StatusCode", out tempString);
                 if (tempString != null)
                 {
                     status = Convert.ToInt16(tempString);
 
-                    switch (status)
+
+                    if (status == 204) { return true; } //Unmodified
+
+                    if (status == 200) //OK - The ICAP status is ok, but the encapsulated HTTP status will likely be different
                     {
-                        case 100: break; //Continue transfer
-                        case 204: return true;
-                        case 404: throw new ICAPException("404: ICAP Service not found");
-                        default: throw new ICAPException("Server returned unknown status code:" + status);
+                        response = getHeader(HTTPTERMINATOR);
+                        int x = response.IndexOf(" ", 0);                           // See how this works in parseHeader()
+                        int y = response.IndexOf(" ", x + 1);                       //
+                        String statusCode = response.Substring(x + 1, y - x - 1);   //
+
+                        if (statusCode.Equals("403"))
+                        {
+                            return false;
+                        }
                     }
                 }
+                throw new ICAPException("Unrecognized or no status code in response header.");
             }
-
-            //Sending remaining part of file
-            if (fileSize > previewSize)
-            {
-                int offset = previewSize;
-                int n;
-                byte[] buffer = new byte[stdSendLength];
-                while ((n = fileStream.Read(buffer, 0, stdSendLength)) > 0)
-                {
-                    offset += n;  // offset for next reading
-                    sender.Send(Encoding.ASCII.GetBytes(buffer.Length.ToString("X") + "\r\n"));
-                    sender.Send(buffer);
-                    sender.Send(Encoding.ASCII.GetBytes("\r\n"));
-                }
-                //Closing file transfer.
-                sender.Send(Encoding.ASCII.GetBytes("0\r\n\r\n"));
-            }
-            fileStream.Close();
-
-            responseMap.Clear();
-            String response = getHeader(ICAPTERMINATOR);
-            responseMap = parseHeader(response);
-
-            responseMap.TryGetValue("StatusCode", out tempString);
-            if (tempString != null)
-            {
-                status = Convert.ToInt16(tempString);
-
-
-                if (status==204) { return true; } //Unmodified
-
-                if (status==200) //OK - The ICAP status is ok, but the encapsulated HTTP status will likely be different
-                {
-                    response = getHeader(HTTPTERMINATOR);
-                    int x = response.IndexOf(" ", 0);                           // See how this works in parseHeader()
-                    int y = response.IndexOf(" ", x + 1);                       //
-                    String statusCode = response.Substring(x + 1, y - x - 1);   //
-
-                    if (statusCode.Equals("403"))
-                    {
-                        return false;
-                    }
-                }
-            }
-            throw new ICAPException("Unrecognized or no status code in response header.");
         }
 
         public string getOptions()
@@ -274,11 +295,13 @@ namespace ICAPNameSpace
 
         }
 
-        ~ICAP()
+        public void Dispose()
         {
             sender.Shutdown(SocketShutdown.Both);
-            sender.Dispose();
             sender.Close();
+            sender.Dispose();
+            //fileStream.Close();
+            //throw new NotImplementedException();
         }
     }
 }
