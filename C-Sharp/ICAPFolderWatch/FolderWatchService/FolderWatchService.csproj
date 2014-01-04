@@ -5,7 +5,7 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{B7801FDC-381D-4B90-AF6B-17644AF08842}</ProjectGuid>
-    <OutputType>WinExe</OutputType>
+    <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>FolderWatchService</RootNamespace>
     <AssemblyName>FolderWatchService</AssemblyName>
@@ -31,9 +31,15 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject>FolderWatchService.FolderWatchService</StartupObject>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Configuration.Install" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Management" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -42,17 +48,29 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Service1.cs">
+    <Compile Include="FolderWatchService.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="Service1.Designer.cs">
-      <DependentUpon>Service1.cs</DependentUpon>
+    <Compile Include="FolderWatchService.Designer.cs">
+      <DependentUpon>FolderWatchService.cs</DependentUpon>
     </Compile>
-    <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="App.config" />
+    <None Include="App.config">
+      <SubType>Designer</SubType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="FolderWatchService.resx">
+      <DependentUpon>FolderWatchService.cs</DependentUpon>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\FolderWatch\FolderWatch.csproj">
+      <Project>{77f2791c-230a-497a-ab29-fa1e389d5868}</Project>
+      <Name>FolderWatch</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

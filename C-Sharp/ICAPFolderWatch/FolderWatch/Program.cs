@@ -8,28 +8,31 @@ using System.IO;
 using System.Timers;
 using System.Configuration;
 using System.Collections.Specialized;
+using System.Diagnostics;
 
 
-namespace FileWatch
+namespace FolderWatchNameSpace
 {
-    //TODO: Make it a service
-    class Program
+    public class Program
     {
+        private static System.Timers.Timer timer;
+
+        private static string watchDir;
         private static string infectedSubDir;
         private static string cleanSubDir;
-
-        private static System.Timers.Timer timer;
-        private static string watchDir;
 
         private static int addAllFilesInterval;
         private static int transferTimeout;
         private static int maxInQueue;
         private static int maxInTransfer;
+        private static int DEBUGLVL;
 
         private static Queue<String> filesInQueue = new Queue<String>();
         private static List<String> filesInTransfer = new List<String>();
 
-        static void Main(string[] args)
+        public static EventLog eventLog;// = new System.Diagnostics.EventLog();
+
+        public static void Main(string[] args)
         {
             ///////////////////////////////////////////////////////
             // Load App.config
@@ -43,25 +46,26 @@ namespace FileWatch
             maxInTransfer = Int32.Parse(appSettings["maxInTransfer"]);
             addAllFilesInterval = Int32.Parse(appSettings["addAllFilesInterval"]);
             transferTimeout = Int32.Parse(appSettings["transferTimeout"]);
+            DEBUGLVL= Int32.Parse(appSettings["DEBUGLVL"]);
 
             ///////////////////////////////////////////////////////
             // Check and create directories
             if (!Directory.Exists(watchDir))
             {
-                Console.WriteLine("Watch path not found!");
+                logWarning("Watch path not found!");
                 return;
             }
 
             if (!Directory.Exists(watchDir + infectedSubDir))
             {
                 Directory.CreateDirectory(watchDir + infectedSubDir);
-                Console.WriteLine("Infected folder created");
+                logInformation("Infected folder created");
             }
 
             if (!Directory.Exists(watchDir + cleanSubDir))
             {
                 Directory.CreateDirectory(watchDir + cleanSubDir);
-                Console.WriteLine("Clean folder created");
+                logInformation("Clean folder created");
             }
 
             ///////////////////////////////////////////////////////
@@ -82,7 +86,37 @@ namespace FileWatch
             addAllFiles(watchDir);
             startTransfers();
 
-            Console.ReadKey();
+            //Console.ReadKey();
+        }
+
+        private static void logInformation(String msg, int debuglvl = 1)
+        {
+            if (DEBUGLVL>=debuglvl)
+            {
+                if (eventLog == null)
+                {
+                    Console.WriteLine(msg);
+                }
+                else
+                {
+                    eventLog.WriteEntry(msg, EventLogEntryType.Information);
+                }
+            }
+        }
+
+        private static void logWarning(String msg)
+        {
+            if (DEBUGLVL >= 0)
+            {
+                if (eventLog == null)
+                {
+                    Console.WriteLine(msg);
+                }
+                else
+                {
+                    eventLog.WriteEntry(msg, EventLogEntryType.Warning);
+                }
+            }
         }
 
         private static void startTransfers()
@@ -151,19 +185,19 @@ namespace FileWatch
 
         private static void timer_Tick(object sender, EventArgs e)
         {
-            Console.WriteLine("Automatically adding all files");
+            logInformation("Automatically adding all files",1);
             addAllFiles(watchDir);
             startTransfers();
         }
 
         private static void addAllFiles(String dir)
         {
-            Console.WriteLine("Adding all files!");
             String[] filesInDir = Directory.GetFiles(dir);
             foreach (String file in filesInDir)
             {
                 addToQueue(file);
             }
+            logInformation("Adding all files!", 2);
         }
 
         private static void FileCreated(object e)
@@ -172,11 +206,11 @@ namespace FileWatch
             string dir = Path.GetDirectoryName(fullFilePath) + @"\";
             string file = Path.GetFileName(fullFilePath);
 
-            Console.WriteLine(String.Format("{0,-3}", filesInTransfer.Count) + "/" + String.Format("{0,5}", filesInQueue.Count) + " Scanning file: " + file);
+            logInformation(String.Format("{0,-3}", filesInTransfer.Count) + "/" + String.Format("{0,5}", filesInQueue.Count) + " Scanning file: " + file,2);
 
             if (!File.Exists(fullFilePath) || IsFileLocked(fullFilePath))
             {
-                Console.WriteLine("File is locked or doesn't exist!\nIt will be retried within " + addAllFilesInterval / 1000 / 60 + " minutes.");
+                logWarning("File is locked or doesn't exist!\nIt will be retried within " + addAllFilesInterval / 1000 / 60 + " minutes.");
             }
             else
             {
@@ -195,7 +229,7 @@ namespace FileWatch
                     }
                     else if (fileStatus == ExecuteResult.ERROR)
                     {
-                        Console.WriteLine("Transfer timedout or failed for: " + file);
+                        logWarning("Transfer timedout or failed for: " + file);
                     }
                 }
             }
