@@ -7,6 +7,7 @@ public class Tester {
     {
         try{
             ICAP icap = new ICAP("192.168.1.5",1344,"avscan");
+            //ICAP icap = new ICAP("10.255.220.6",1344,"virus_scan");
             
             String[] files = new String[]{
                  "C:\\Users\\Mads\\Downloads\\eicar.com.txt"
