@@ -134,7 +134,7 @@ class ICAP {
     
     /**
      * Receive an expected ICAP header as response of a request. The returned String should be parsed with parseHeader()
-     * @param maxLength
+     * @param terminator
      * @return String of the raw response
      * @throws IOException
      * @throws ICAPException 
@@ -295,7 +295,7 @@ class ICAP {
     /**
      * Given a raw response header as a String, it will parse through it and return a HashMap of the result
      * @param response A raw response header as a String.
-     * @return 
+     * @return HashMap of the key,value pairs of the response
      */
     private Map<String,String> parseHeader(String response){
         Map<String,String> headers = new HashMap<String, String>();

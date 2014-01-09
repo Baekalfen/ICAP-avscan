@@ -31,15 +31,21 @@ namespace ICAPNameSpace
 
         private String tempString;
         /**
-            * Initializes the socket connection and IO streams. It askes the server for the available options and
-            * changes settings to match it.
-            * @param s The IP address to connect to.
-            * @param p The port in the host to use.
-            * @param icapService The service to use (fx "avscan").
             * @throws IOException
             * @throws ICAPException 
             */
-        public ICAP(String serverIP, int port, String icapService)
+           
+        /// <summary>
+        /// Initializes the socket connection and IO streams. It askes the server for the available options and
+        /// changes settings to match it.
+        /// </summary>
+        /// <param name="serverIP">The IP address to connect to.</parm>
+        /// <param name="port">The port in the host to use.</parm>
+        /// <param name="icapService">The service to use (fx "avscan").</parm>
+        /// <param name="previewSize">Specify a preview size to overwrite server preferences</parm>
+        /// <exception cref="ICAPException">Thrown when error occurs in communication with server</exception>
+        /// <exception cref="SocketException">Thrown when error occurs in connection to server</exception>
+        public ICAP(String serverIP, int port, String icapService, int previewSize=-1)
         {
             this.icapService = icapService;
             this.serverIP = serverIP;
@@ -53,47 +59,45 @@ namespace ICAPNameSpace
             sender = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             sender.Connect(remoteEP);
 
-            String parseMe = getOptions();
-            Dictionary<string, string> responseMap = parseHeader(parseMe);
-
-            responseMap.TryGetValue("StatusCode", out tempString);
-            if (tempString != null)
+            if (previewSize != -1)
             {
-                int status = Convert.ToInt16(tempString);
+                stdPreviewSize = previewSize;
+            }
+            else
+            {
+                String parseMe = getOptions();
+                Dictionary<string, string> responseMap = parseHeader(parseMe);
 
-                switch (status)
+                responseMap.TryGetValue("StatusCode", out tempString);
+                if (tempString != null)
                 {
-                    case 200:
+                    int status = Convert.ToInt16(tempString);
+
+                    switch (status)
+                    {
+                        case 200:
                         responseMap.TryGetValue("Preview", out tempString);
                         if (tempString != null)
                         {
                             stdPreviewSize = Convert.ToInt16(tempString);
-                        }; break;
-                    default: throw new ICAPException("Could not get preview size from server");
-                }
-            }
-            else
-            {
-                throw new ICAPException("Could not get options from server");
+                            }; break;
+                            default: throw new ICAPException("Could not get preview size from server");
+                        }
+                    }
+                    else
+                    {
+                        throw new ICAPException("Could not get options from server");
+                    }
             }
         }
 
-        public ICAP(String serverIP, int port, String icapService, int previewSize)
-        {
-            this.icapService = icapService;
-            this.serverIP = serverIP;
-            this.port = port;
-
-            //Initialize connection
-            IPAddress ipAddress = IPAddress.Parse(serverIP);
-            IPEndPoint remoteEP = new IPEndPoint(ipAddress, port);
-
-            // Create a TCP/IP  socket.
-            sender = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            sender.Connect(remoteEP);
-            stdPreviewSize = previewSize;
-        }
-
+        /// <summary>
+        /// Automatically asks for the servers available options and returns the raw response as a String.
+        /// </summary>
+        /// <param name="filepath">Relative or absolute filepath to a file.</parm>
+        /// <exception cref="ICAPException">Thrown when error occurs in communication with server</exception>
+        /// <exception cref="IOException">Thrown when error occurs in reading file</exception>
+        /// <exception cref="SocketException">Thrown if socket is closed unexpectedly.</exception>
         public bool scanFile(String filepath)
         {
             using (FileStream fileStream = new FileStream(filepath, FileMode.Open))
@@ -213,6 +217,11 @@ namespace ICAPNameSpace
             }
         }
 
+
+        /// <summary>
+        /// Automatically asks for the servers available options and returns the raw response as a String.
+        /// </summary>
+        /// <returns>String of the raw response</returns>
         public string getOptions()
         {
             byte[] msg = Encoding.ASCII.GetBytes(
@@ -226,6 +235,12 @@ namespace ICAPNameSpace
             return getHeader(ICAPTERMINATOR);
         }
 
+        /// <summary>
+        /// Receive an expected ICAP header as response of a request. The returned String should be parsed with parseHeader()
+        /// </summary>
+        /// <param name="terminator">Relative or absolute filepath to a file.</parm>
+        /// <exception cref="ICAPException">Thrown when error occurs in communication with server</exception>
+        /// <returns>String of the raw response</returns>
         public String getHeader(String terminator) //"\r\n\r\n"
         {
             byte[] buffer = new byte[stdRecieveLength];
@@ -248,6 +263,11 @@ namespace ICAPNameSpace
             throw new ICAPException("Error in getHeader() method");
         }
 
+        /// <summary>
+        /// Given a raw response header as a String, it will parse through it and return a Dictionary of the result
+        /// </summary>
+        /// <param name="response">A raw response header as a String.</parm>
+        /// <returns>Dictionary of the key,value pairs of the response</returns>
         public Dictionary<String, String> parseHeader(String response)
         {
             Dictionary<String, String> headers = new Dictionary<String, String>();
@@ -286,6 +306,9 @@ namespace ICAPNameSpace
             return headers;
         }
 
+        /// <summary>
+        /// A basic excpetion to show ICAP-related errors
+        /// </summary>
         public class ICAPException : Exception
         {
             public ICAPException(string message)
