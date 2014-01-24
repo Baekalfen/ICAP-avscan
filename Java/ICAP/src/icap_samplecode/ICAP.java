@@ -25,7 +25,7 @@ class ICAP {
 
     private String icapService;
     private final String VERSION   = "1.0";
-    private final String USERAGENT = "IT-Kartellet ICAP Client/0.9";
+    private final String USERAGENT = "IT-Kartellet ICAP Client/13.37";
 
     private int stdPreviewSize = 1024;
     private final int stdRecieveLength = 8192;
@@ -121,7 +121,7 @@ class ICAP {
         //Send OPTIONS header and receive response
         //Sending and recieving
         String requestHeader = 
-                  "OPTIONS icap://"+serverIP+"/"+icapService+" "+VERSION+"\r\n"
+                  "OPTIONS icap://"+serverIP+"/"+icapService+" ICAP/"+VERSION+"\r\n"
                 + "Host: "+serverIP+"\r\n"
                 + "User-Agent: "+USERAGENT+"\r\n"
                 + "Encapsulated: null-body=0\r\n"
@@ -214,7 +214,7 @@ class ICAP {
             +"\r\n"
             +resBody
             +Integer.toHexString(previewSize) +"\r\n";
-
+            
             sendString(requestBuffer);
 
             //Sending preview or, if smaller than previewSize, the whole file.
@@ -242,13 +242,13 @@ class ICAP {
 
                     switch (status){
                         case 100: break; //Continue transfer
+                        case 200: return false;
                         case 204: return true;
                         case 404: throw new ICAPException("404: ICAP Service not found");
                         default: throw new ICAPException("Server returned unknown status code:"+status);
                     }
                 }
             }
-
 
             //Sending remaining part of file
             if (fileSize>previewSize){
@@ -271,6 +271,7 @@ class ICAP {
             String status=responseMap.get("StatusCode");
             if (status != null && (status.equals("200") || status.equals("204"))){
                 if (status.equals("204")){return true;} //Unmodified
+                if (status.equals("200")){return false;} //Infected
 
                 if (status.equals("200")){ //OK
                     response = getHeader(HTTPTERMINATOR);
@@ -319,7 +320,8 @@ class ICAP {
         // Read headers
         int i = response.indexOf("\r\n",y);
         i+=2;
-        while (i+2!=response.length()) {
+        while (i+2!=response.length() && response.substring(i).contains(":")) {
+
             int n = response.indexOf(":",i);
             String key = response.substring(i, n);
 
@@ -330,7 +332,7 @@ class ICAP {
             headers.put(key, value);
             i+=2;
         }
-        
+
         return headers;
     }
     
