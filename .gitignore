@@ -6,3 +6,5 @@
 *.ear
 build/*
 /nbproject/private
+/Java/ICAP/nbproject/private/
+/Java/ICAP/dist/

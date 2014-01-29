@@ -15,9 +15,11 @@ namespace ICAPNameSpace
         private String serverIP;
         private int port;
 
+        private Socket sender;
+        
         private String icapService;
         private const String VERSION = "1.0";
-        private const String USERAGENT = "IT-Kartellet ICAP Client/1.0";
+        private const String USERAGENT = "IT-Kartellet ICAP Client/1.1";
         private const String ICAPTERMINATOR = "\r\n\r\n";
         private const String HTTPTERMINATOR = "0\r\n\r\n";
 
@@ -26,10 +28,8 @@ namespace ICAPNameSpace
         private const int stdSendLength = 8192;
 
         private byte[] buffer = new byte[8192];
-
-        private Socket sender;
-
         private String tempString;
+
         /**
             * @throws IOException
             * @throws ICAPException 
@@ -136,7 +136,7 @@ namespace ICAPNameSpace
                 {
                     sender.Send(Encoding.ASCII.GetBytes("0; ieof\r\n\r\n"));
                 }
-                else
+                else if (previewSize != 0)
                 {
                     sender.Send(Encoding.ASCII.GetBytes("0\r\n\r\n"));
                 }
@@ -146,8 +146,6 @@ namespace ICAPNameSpace
                 // otherwise it is a "go" for the rest of the file.
                 Dictionary<String, String> responseMap = new Dictionary<string, string>();
                 int status;
-
-
 
                 if (fileSize > previewSize)
                 {
@@ -163,6 +161,7 @@ namespace ICAPNameSpace
                         switch (status)
                         {
                             case 100: break; //Continue transfer
+                            case 200: return false;
                             case 204: return true;
                             case 404: throw new ICAPException("404: ICAP Service not found");
                             default: throw new ICAPException("Server returned unknown status code:" + status);
@@ -203,11 +202,12 @@ namespace ICAPNameSpace
                     if (status == 200) //OK - The ICAP status is ok, but the encapsulated HTTP status will likely be different
                     {
                         response = getHeader(HTTPTERMINATOR);
-                        int x = response.IndexOf(" ", 0);                           // See how this works in parseHeader()
-                        int y = response.IndexOf(" ", x + 1);                       //
-                        String statusCode = response.Substring(x + 1, y - x - 1);   //
+                        // Searching for: <title>ProxyAV: Access Denied</title>
+                        int x = response.IndexOf("<title>", 0);
+                        int y = response.IndexOf("</title>", x);
+                        String statusCode = response.Substring(x + 7, y - x - 7);
 
-                        if (statusCode.Equals("403"))
+                        if (statusCode.Equals("ProxyAV: Access Denied"))
                         {
                             return false;
                         }
@@ -225,7 +225,7 @@ namespace ICAPNameSpace
         public string getOptions()
         {
             byte[] msg = Encoding.ASCII.GetBytes(
-                "OPTIONS icap://" + serverIP + "/" + icapService + " " + VERSION + "\r\n"
+                "OPTIONS icap://" + serverIP + "/" + icapService + " ICAP/" + VERSION + "\r\n"
                 + "Host: " + serverIP + "\r\n"
                 + "User-Agent: " + USERAGENT + "\r\n"
                 + "Encapsulated: null-body=0\r\n"
@@ -241,13 +241,15 @@ namespace ICAPNameSpace
         /// <param name="terminator">Relative or absolute filepath to a file.</parm>
         /// <exception cref="ICAPException">Thrown when error occurs in communication with server</exception>
         /// <returns>String of the raw response</returns>
-        public String getHeader(String terminator) //"\r\n\r\n"
+        public String getHeader(String terminator)
         {
-            byte[] buffer = new byte[stdRecieveLength];
             byte[] endofheader = System.Text.Encoding.UTF8.GetBytes(terminator);
+            byte[] buffer = new byte[stdRecieveLength];
+
+            int n;
             int offset = 0;
-            int n = 0;
-            while (((n = sender.Receive(buffer, offset, stdRecieveLength - offset, SocketFlags.None)) != 0) && (offset < stdRecieveLength)) // last part is to secure against DDOS
+            //stdRecieveLength-offset is replaced by '1' to not receive the next (HTTP) header.
+            while ((offset < stdRecieveLength) && ((n = sender.Receive(buffer, offset, 1, SocketFlags.None)) != 0)) // first part is to secure against DOS
             {
                 offset += n;
                 if (offset > endofheader.Length + 13) // 13 is the smallest possible message (ICAP/1.0 xxx\r\n) or (HTTP/1.0 xxx\r\n)
@@ -291,7 +293,7 @@ namespace ICAPNameSpace
             // Read headers
             int i = response.IndexOf("\r\n", y);
             i += 2;
-            while (i + 2 != response.Length)
+            while (i + 2 != response.Length && response.Substring(i).Contains(':'))
             {
                 int n = response.IndexOf(":", i);
                 String key = response.Substring(i, n - i);
