@@ -30,16 +30,9 @@ namespace ICAPNameSpace
         private Socket sender;
 
         private String tempString;
-        /**
-            * Initializes the socket connection and IO streams. It askes the server for the available options and
-            * changes settings to match it.
-            * @param s The IP address to connect to.
-            * @param p The port in the host to use.
-            * @param icapService The service to use (fx "avscan").
-            * @throws IOException
-            * @throws ICAPException 
-            */
-        public ICAP(String serverIP, int port, String icapService)
+
+        
+        public ICAP(String serverIP, int port, String icapService, int previewSize = -1)
         {
             this.icapService = icapService;
             this.serverIP = serverIP;
@@ -53,45 +46,36 @@ namespace ICAPNameSpace
             sender = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             sender.Connect(remoteEP);
 
-            String parseMe = getOptions();
-            Dictionary<string, string> responseMap = parseHeader(parseMe);
-
-            responseMap.TryGetValue("StatusCode", out tempString);
-            if (tempString != null)
+            if (previewSize != -1)
             {
-                int status = Convert.ToInt16(tempString);
-
-                switch (status)
-                {
-                    case 200:
-                        responseMap.TryGetValue("Preview", out tempString);
-                        if (tempString != null)
-                        {
-                            stdPreviewSize = Convert.ToInt16(tempString);
-                        }; break;
-                    default: throw new ICAPException("Could not get preview size from server");
-                }
+                stdPreviewSize = previewSize;
             }
             else
             {
-                throw new ICAPException("Could not get options from server");
+                String parseMe = getOptions();
+                Dictionary<string, string> responseMap = parseHeader(parseMe);
+
+                responseMap.TryGetValue("StatusCode", out tempString);
+                if (tempString != null)
+                {
+                    int status = Convert.ToInt16(tempString);
+
+                    switch (status)
+                    {
+                        case 200:
+                            responseMap.TryGetValue("Preview", out tempString);
+                            if (tempString != null)
+                            {
+                                stdPreviewSize = Convert.ToInt16(tempString);
+                            }; break;
+                        default: throw new ICAPException("Could not get preview size from server");
+                    }
+                }
+                else
+                {
+                    throw new ICAPException("Could not get options from server");
+                }
             }
-        }
-
-        public ICAP(String serverIP, int port, String icapService, int previewSize)
-        {
-            this.icapService = icapService;
-            this.serverIP = serverIP;
-            this.port = port;
-
-            //Initialize connection
-            IPAddress ipAddress = IPAddress.Parse(serverIP);
-            IPEndPoint remoteEP = new IPEndPoint(ipAddress, port);
-
-            // Create a TCP/IP  socket.
-            sender = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            sender.Connect(remoteEP);
-            stdPreviewSize = previewSize;
         }
 
         public bool scanFile(String filepath)
@@ -142,8 +126,6 @@ namespace ICAPNameSpace
                 // otherwise it is a "go" for the rest of the file.
                 Dictionary<String, String> responseMap = new Dictionary<string, string>();
                 int status;
-
-
 
                 if (fileSize > previewSize)
                 {
