@@ -25,7 +25,7 @@ class ICAP {
 
     private String icapService;
     private final String VERSION   = "1.0";
-    private final String USERAGENT = "IT-Kartellet ICAP Client/0.9";
+    private final String USERAGENT = "IT-Kartellet ICAP Client/13.37";
 
     private int stdPreviewSize = 1024;
     private final int stdRecieveLength = 8192;
@@ -44,8 +44,8 @@ class ICAP {
      */
     public ICAP(String s,int p, String icapService) throws IOException, ICAPException{
         this.icapService = icapService;
-        serverIP = s;
-        port = p;        
+        this.serverIP = s;
+        this.port = p;        
         //Initialize connection
         if ((client = new Socket(serverIP, port)) == null){
             throw new ICAPException("Could not open socket connection");
@@ -82,8 +82,59 @@ class ICAP {
     }
     
     /**
+     * Initializes the socket connection and IO streams. This overload doesn't
+     * use getOptions(), instead a previewSize is specified.
+     * @param s The IP address to connect to.
+     * @param p The port in the host to use.
+     * @param icapService The service to use (fx "avscan").
+     * @param previewSize Amount of bytes to  send as preview.
+     * @throws IOException
+     * @throws ICAPException 
+     */
+    public ICAP(String s,int p, String icapService, int previewSize) throws IOException, ICAPException{
+        this.icapService = icapService;
+        serverIP = s;
+        port = p;        
+        //Initialize connection
+        if ((client = new Socket(serverIP, port)) == null){
+            throw new ICAPException("Could not open socket connection");
+        }
+
+        //Openening out stream
+        OutputStream outToServer = client.getOutputStream();
+        out = new DataOutputStream(outToServer);
+
+        //Openening in stream
+        InputStream inFromServer = client.getInputStream();
+        in = new DataInputStream(inFromServer);
+        
+        stdPreviewSize = previewSize;
+    }
+    
+    /**
+     * Automatically asks for the servers available options and returns the raw response as a String.
+     * @return String of the servers response.
+     * @throws IOException
+     * @throws ICAPException 
+     */
+    private String getOptions() throws IOException, ICAPException{
+        //Send OPTIONS header and receive response
+        //Sending and recieving
+        String requestHeader = 
+                  "OPTIONS icap://"+serverIP+"/"+icapService+" ICAP/"+VERSION+"\r\n"
+                + "Host: "+serverIP+"\r\n"
+                + "User-Agent: "+USERAGENT+"\r\n"
+                + "Encapsulated: null-body=0\r\n"
+                + "\r\n";
+
+        sendString(requestHeader);
+
+        return getHeader(ICAPTERMINATOR);
+    }
+    
+    /**
      * Receive an expected ICAP header as response of a request. The returned String should be parsed with parseHeader()
-     * @param maxLength
+     * @param terminator
      * @return String of the raw response
      * @throws IOException
      * @throws ICAPException 
@@ -92,7 +143,7 @@ class ICAP {
         byte[] endofheader = terminator.getBytes(StandardCharsetsUTF8);//new byte[] {'\r','\n','\r','\n'};
         byte[] response = new byte[stdRecieveLength];
 
-        int n=0;
+        int n;
         int offset=0;
         while(((n = in.read(response, offset, stdRecieveLength - offset)) != -1) && (offset < stdRecieveLength)) {
             offset += n;
@@ -126,27 +177,6 @@ class ICAP {
             out.write(chunk[i]);
         }
     }
-    
-    /**
-     * Automatically asks for the servers available options and returns the raw response as a String.
-     * @return String of the servers response.
-     * @throws IOException
-     * @throws ICAPException 
-     */
-    private String getOptions() throws IOException, ICAPException{
-        //Send OPTIONS header and receive response
-        //Sending and recieving
-        String requestHeader = 
-                  "OPTIONS icap://"+serverIP+"/"+icapService+" "+VERSION+"\r\n"
-                + "Host: "+serverIP+"\r\n"
-                + "User-Agent: "+USERAGENT+"\r\n"
-                + "Encapsulated: null-body=0\r\n"
-                + "\r\n";
-
-        sendString(requestHeader);
-
-        return getHeader(ICAPTERMINATOR);
-    }
 
     /**
      * Given a filepath, it will send the file to the server and return true,
@@ -155,108 +185,118 @@ class ICAP {
      * @return Returns true when no infection is found.
      */
     public boolean scanFile(String filename) throws IOException,ICAPException{
-        FileInputStream fileInStream;
+        
+        //Differs from C# version. it uses a using statement for the filestream
+        // If Java 7 is accepted, then use try(FileInputStream fileInStream = new FileInputStream(file)){}
+        FileInputStream fileInStream = null;
         int fileSize;
 
-        File file = new File(filename);
-        fileInStream = new FileInputStream(file);
-        fileSize = fileInStream.available();
+        try {
+            File file = new File(filename);
+            fileInStream = new FileInputStream(file);
+            fileSize = fileInStream.available();
 
-        //First part of header
-        String resBody = "Content-Length: "+fileSize+"\r\n\r\n";
+            //First part of header
+            String resBody = "Content-Length: "+fileSize+"\r\n\r\n";
 
-        int previewSize = stdPreviewSize;
-        if (fileSize<stdPreviewSize){
-            previewSize = fileSize;
-        }
+            int previewSize = stdPreviewSize;
+            if (fileSize<stdPreviewSize){
+                previewSize = fileSize;
+            }
 
-        String requestBuffer = 
-        "RESPMOD icap://"+serverIP+"/"+icapService+" ICAP/"+VERSION+"\r\n"
-        +"Host: "+serverIP+"\r\n"
-        +"User-Agent: "+USERAGENT+"\r\n"
-        +"Allow: 204\r\n"
-        +"Preview: "+previewSize+"\r\n"
-        +"Encapsulated: res-hdr=0, res-body="+resBody.length()+"\r\n"
-        +"\r\n"
-        +resBody
-        +Integer.toHexString(previewSize) +"\r\n";
+            String requestBuffer = 
+            "RESPMOD icap://"+serverIP+"/"+icapService+" ICAP/"+VERSION+"\r\n"
+            +"Host: "+serverIP+"\r\n"
+            +"User-Agent: "+USERAGENT+"\r\n"
+            +"Allow: 204\r\n"
+            +"Preview: "+previewSize+"\r\n"
+            +"Encapsulated: res-hdr=0, res-body="+resBody.length()+"\r\n"
+            +"\r\n"
+            +resBody
+            +Integer.toHexString(previewSize) +"\r\n";
+            
+            sendString(requestBuffer);
 
-        sendString(requestBuffer);
+            //Sending preview or, if smaller than previewSize, the whole file.
+            byte[] chunk= new byte[previewSize];
 
-        //Sending preview or, if smaller than previewSize, the whole file.
-        byte[] chunk= new byte[previewSize];
-
-        fileInStream.read(chunk);
-        sendBytes(chunk);
-        sendString("\r\n");
-        if (fileSize<=previewSize){
-            requestBuffer = "0; ieof\r\n\r\n";
-        }
-        else{
-            requestBuffer = "0\r\n\r\n";
-        }
-        sendString(requestBuffer);
+            fileInStream.read(chunk);
+            sendBytes(chunk);
+            sendString("\r\n");
+            if (fileSize<=previewSize){
+                sendString("0; ieof\r\n\r\n");
+            }
+            else{
+                sendString("0\r\n\r\n");
+            }
 
             // Parse the response! It might not be "100 continue"
             // if fileSize<previewSize, then this is acutally the respond
             // otherwise it is a "go" for the rest of the file.
-        if (fileSize>previewSize){
-            String parseMe = getHeader(ICAPTERMINATOR);
-            Map<String,String> responseMap = parseHeader(parseMe);
+            if (fileSize>previewSize){
+                String parseMe = getHeader(ICAPTERMINATOR);
+                Map<String,String> responseMap = parseHeader(parseMe);
 
-            if (responseMap.get("StatusCode") != null){
-                int status=Integer.parseInt(responseMap.get("StatusCode"));
+                if (responseMap.get("StatusCode") != null){
+                    int status=Integer.parseInt(responseMap.get("StatusCode"));
 
-                switch (status){
-                    case 100: break; //Continue transfer
-                    case 204: return true;
-                    case 404: throw new ICAPException("404: ICAP Service not found");
-                    default: throw new ICAPException("Server returned unknown status code:"+status);
+                    switch (status){
+                        case 100: break; //Continue transfer
+                        case 200: return false;
+                        case 204: return true;
+                        case 404: throw new ICAPException("404: ICAP Service not found");
+                        default: throw new ICAPException("Server returned unknown status code:"+status);
+                    }
                 }
             }
-        }
 
-
-        //Sending remaining part of file
-        if (fileSize>previewSize){
-            while ((fileInStream.read(chunk)) != -1) {
-                sendString(Integer.toHexString(chunk.length) +"\r\n");
-                sendBytes(chunk);
-                sendString("\r\n");
+            //Sending remaining part of file
+            if (fileSize>previewSize){
+                while ((fileInStream.read(chunk)) != -1) {
+                    sendString(Integer.toHexString(chunk.length) +"\r\n");
+                    sendBytes(chunk);
+                    sendString("\r\n");
+                }
+                //Closing file transfer.
+                requestBuffer = "0\r\n\r\n";
+                sendString(requestBuffer);
             }
-            //Closing file transfer.
-            requestBuffer = "0\r\n\r\n";
-            sendString(requestBuffer);
-        }
 
-        fileInStream.close();
+            //fileInStream.close();
 
-        Map<String,String> responseMap;
-        String response = getHeader(ICAPTERMINATOR);
-        responseMap = parseHeader(response);
+            Map<String,String> responseMap;
+            String response = getHeader(ICAPTERMINATOR);
+            responseMap = parseHeader(response);
 
-        String status=responseMap.get("StatusCode");
-        if (status != null && (status.equals("200") || status.equals("204"))){
-            if (status.equals("204")){return true;} //Unmodified
+            String status=responseMap.get("StatusCode");
+            if (status != null && (status.equals("200") || status.equals("204"))){
+                if (status.equals("204")){return true;} //Unmodified
+                if (status.equals("200")){return false;} //Infected
 
-            if (status.equals("200")){ //OK
-                response = getHeader(HTTPTERMINATOR);
-                //response = getHeader(ICAPTERMINATOR);
-                int x = response.indexOf(" ",0);
-                int y = response.indexOf(" ",x+1);
-                String statusCode = response.substring(x+1,y);
-                if (statusCode.equals("403")){
-                    return false;
+                if (status.equals("200")){ //OK
+                    response = getHeader(HTTPTERMINATOR);
+                    //response = getHeader(ICAPTERMINATOR);
+                    int x = response.indexOf(" ",0);
+                    int y = response.indexOf(" ",x+1);
+                    String statusCode = response.substring(x+1,y);
+                    if (statusCode.equals("403")){
+                        return false;
+                    }
                 }
             }
+            throw new ICAPException("Unrecognized or no status code in response header.");
         }
-        throw new ICAPException("Unrecognized or no status code in response header.");
+        finally{
+            if (fileInStream != null){
+                fileInStream.close();
+            }
+        }
     }
     
     /**
      * Given a raw response header as a String, it will parse through it and return a HashMap of the result
      * @param response A raw response header as a String.
-     * @return 
+     * @return HashMap of the key,value pairs of the response
      */
     private Map<String,String> parseHeader(String response){
         Map<String,String> headers = new HashMap<String, String>();
@@ -280,7 +320,8 @@ class ICAP {
         // Read headers
         int i = response.indexOf("\r\n",y);
         i+=2;
-        while (i+2!=response.length()) {
+        while (i+2!=response.length() && response.substring(i).contains(":")) {
+
             int n = response.indexOf(":",i);
             String key = response.substring(i, n);
 
@@ -291,7 +332,7 @@ class ICAP {
             headers.put(key, value);
             i+=2;
         }
-        
+
         return headers;
     }
     
@@ -308,7 +349,7 @@ class ICAP {
     @Override
     protected void finalize() throws Throwable {
         try {
-            disconnect();        // close open files
+            disconnect();
         } finally {
             super.finalize();
         }
