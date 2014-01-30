@@ -12,6 +12,8 @@ The C# version has the addition of a 'FolderWatch' application (also available a
 Example of use
 ==============
 
+
+
 The ICAP Protocol
 =================
 
@@ -53,6 +55,7 @@ Introduction
 ------------
 Both versions have the same interface of public and private methods. Although they are not equal in the way of handling exceptions.
 Both versions will disconnect automatically when caught by the garbage collection.
+The ICAP class is __NOT__ thread-safe. If you have to transfer more than one file at a time, then instantiate the ICAP class for each connection.
 
 Example of C# Version
 ---------------------
