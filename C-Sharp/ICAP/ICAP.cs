@@ -217,12 +217,11 @@ namespace ICAPNameSpace
             }
         }
 
-
         /// <summary>
         /// Automatically asks for the servers available options and returns the raw response as a String.
         /// </summary>
         /// <returns>String of the raw response</returns>
-        public string getOptions()
+        private string getOptions()
         {
             byte[] msg = Encoding.ASCII.GetBytes(
                 "OPTIONS icap://" + serverIP + "/" + icapService + " ICAP/" + VERSION + "\r\n"
@@ -241,7 +240,7 @@ namespace ICAPNameSpace
         /// <param name="terminator">Relative or absolute filepath to a file.</parm>
         /// <exception cref="ICAPException">Thrown when error occurs in communication with server</exception>
         /// <returns>String of the raw response</returns>
-        public String getHeader(String terminator)
+        private String getHeader(String terminator)
         {
             byte[] endofheader = System.Text.Encoding.UTF8.GetBytes(terminator);
             byte[] buffer = new byte[stdRecieveLength];
@@ -270,7 +269,7 @@ namespace ICAPNameSpace
         /// </summary>
         /// <param name="response">A raw response header as a String.</parm>
         /// <returns>Dictionary of the key,value pairs of the response</returns>
-        public Dictionary<String, String> parseHeader(String response)
+        private Dictionary<String, String> parseHeader(String response)
         {
             Dictionary<String, String> headers = new Dictionary<String, String>();
 
