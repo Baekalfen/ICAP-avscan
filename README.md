@@ -14,8 +14,8 @@ Example of use
 
 Case 1
 ------
-When a customer/user uploads a file on a web page it can be of any kind. This is a major security risk, if these files aren't virus-scanned. The FolderWatch subproject allows for a automatic scanning of these files and sorts them depending on the security risk. The FolderWatch will send the files individually to a BCP which checks the file and returns a answer.
-The result of the virus scan can be stored together with the account information of that customer/user to keep track of the files and their status. 
+When a customer/user uploads a file on a web page it can be of any kind. This is a major security risk, if these files aren't virus-scanned. The FolderWatch subproject allows for a automatic scanning of these files and sorts them depending on the security risk. The FolderWatch will send the files individually to a BCP which checks the file and returns an answer.
+As an example, the result of the virus scan can be stored together with the account information of that customer/user to keep track of the files and their status. 
 
 
 The ICAP Protocol
@@ -23,7 +23,7 @@ The ICAP Protocol
 
 Introduction
 ------------
-The __Internet Content Adaption Protocol__ is heavily inspired by HTTP but the use differs on some core aspects. ICAP is normally implemented as an addition to HTTP, where the HTTP request for a web page can be encapsulated and modified before the user gets the content. This way a content filter, like a anti-virus software, can be transparent to the end-user.
+The __Internet Content Adaption Protocol__ is heavily inspired by HTTP but the use differs on some core aspects. ICAP is normally implemented as an addition to HTTP, where the HTTP request for a web page can be encapsulated and modified before the user gets the content. This way, a content filter like a anti-virus software, can be transparent to the end-user.
 In this project, it is just used as a file transfer protocol with a feedback from the server about the file's virus-status.
 
 Error codes
@@ -159,7 +159,14 @@ The FolderWatch subproject allow a Windows machine to continually scan files in 
 
 Setup
 -----
+Navigate to the directory where the compiled FolderWatchService is located. Open the '.config' file and edit the appropriate settings (See Behavior).
 
+Open a Visual Studio command prompt or a normal command prompt and note the location of  your installutil.exe. Navigate to the directory where the compiled FolderWatchService is located.
+Now type either:
+> installutil FolderWatchService.exe
+
+or if you are using a normal command prompt:
+> C:\The\Dirs\To\installutil.exe FolderWatchService.exe
 
 Behavior
 --------
