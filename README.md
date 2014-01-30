@@ -12,6 +12,10 @@ The C# version has the addition of a 'FolderWatch' application (also available a
 Example of use
 ==============
 
+Case 1
+------
+When a customer/user uploads a file on a web page it can be of any kind. This is a major security risk, if these files aren't virus-scanned. The FolderWatch subproject allows for a automatic scanning of these files and sorts them depending on the security risk. The FolderWatch will send the files individually to a BCP which checks the file and returns a answer.
+The result of the virus scan can be stored together with the account information of that customer/user to keep track of the files and their status. 
 
 
 The ICAP Protocol
@@ -67,11 +71,14 @@ The example below is fairly simple and involves only scanning 1 file. The scanFi
         {
             try
             {
+                // Starts a connection to the ICAP server
                 ICAPNameSpace.ICAP icap = new ICAPNameSpace.ICAP("192.168.1.5",1344,"avscan");
                 try
                 {
                     string file = @"C:\foo\bar.exe";
                     Console.Write(file + ": ");
+
+                    // Sends the file for scanning and the result is stored in 'result'
                     bool result = icap.scanFile(file);
                     Console.WriteLine(result);
                 }
@@ -97,11 +104,14 @@ The example below is fairly simple and involves only scanning 1 file. The scanFi
         {
             try
             {
+                // Starts a connection to the ICAP server
                 ICAP icap = new ICAP("192.168.1.5",1344,"avscan");
                 try
                 {
                     String file = "\foo\bar.txt"
                     System.out.print(file + ": ");
+
+                    // Sends the file for scanning and the result is stored in 'result'
                     boolean result = icap.scanFile(file);
                     System.out.println(result);
                 }
@@ -158,6 +168,5 @@ When the FolderWatch application starts, it will add all the current files in th
 Apart from adding all current files in the directory to the scan-queue, it will also watch the directory for created files. When a file is created, it is added to the scan-queue. The maxInQueue limit ensure that system memory is not clogged with waiting files. If the scan-queue is full when a new file is added, it will be ignored.
 
 In the app.config a 'addAllFilesInterval' is defined in milliseconds. When the time has passed, it will added files in the directory to the scan-queue so that they aren't ignored completely.
-
 
 The console application will print out to the command prompt with informations, error and so on. Alternatively, if it is installed as a service, it will send all messages to the system's event log.
