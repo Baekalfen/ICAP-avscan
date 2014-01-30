@@ -21,8 +21,10 @@ The __Internet Content Adaption Protocol__ is heavily inspired by HTTP but the u
 In this project, it is just used as a file transfer protocol with a feedback from the server about the file's virus-status.
 
 Error codes
-When working with the protocol, it often comes in handy to have the error codes and descriptions
 -----------
+
+When working with the protocol, it often comes in handy to have the error codes and descriptions
+
 | Code | Description                                                                                                                                                           |
 |------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 |      | __Informational Codes__                                                                                                                                               |
@@ -50,7 +52,7 @@ Use of The Libraries
 Introduction
 ------------
 Both versions have the same interface of public and private methods. Although they are not equal in the way of handling exceptions.
-Both versions will disconnect automatically when caught by the garbage collection
+Both versions will disconnect automatically when caught by the garbage collection.
 
 Example of C# Version
 ---------------------
@@ -148,8 +150,11 @@ Setup
 
 Behavior
 --------
-When the FolderWatch application starts, it will add all the current files in the directory to a scan-queue. This list is iterated through when there is open for a new connection. The max amount of connections is specified in the app.config as 'maxInTransfer. The scan-queue limit is defined in app.config as 'maxInQueue'.
+When the FolderWatch application starts, it will add all the current files in the directory to a scan-queue. This list is iterated through when there is open for new connections. The max amount of connections is specified in the app.config as 'maxInTransfer'. The scan-queue limit is defined in app.config as 'maxInQueue'.
 
 Apart from adding all current files in the directory to the scan-queue, it will also watch the directory for created files. When a file is created, it is added to the scan-queue. The maxInQueue limit ensure that system memory is not clogged with waiting files. If the scan-queue is full when a new file is added, it will be ignored.
 
 In the app.config a 'addAllFilesInterval' is defined in milliseconds. When the time has passed, it will added files in the directory to the scan-queue so that they aren't ignored completely.
+
+
+The console application will print out to the command prompt with informations, error and so on. Alternatively, if it is installed as a service, it will send all messages to the system's event log.
