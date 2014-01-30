@@ -8,3 +8,12 @@ build/*
 /nbproject/private
 /Java/ICAP/nbproject/private/
 /Java/ICAP/dist/
+
+/C-Sharp/ICAPTester/bin/
+/C-Sharp/ICAPTester/obj/
+
+/C-Sharp/ICAPFolderWatch/FolderWatch/bin/
+/C-Sharp/ICAPFolderWatch/FolderWatch/obj/
+
+/C-Sharp/ICAPFolderWatch/FolderWatchService/bin/
+/C-Sharp/ICAPFolderWatch/FolderWatchService/obj/
