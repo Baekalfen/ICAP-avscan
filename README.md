@@ -5,19 +5,23 @@ Table of Contents
 
 Introduction
 ============
-This project is intended to be used with Blue Coat ProxyAV (BCP), but other ICAP anti-virus system might work aswell. The library is split into 2 versions, 1 written in Java and 1 written in C#. The versions are identical in behavior and more or less identical code-wise too.
+This project is intended to be used with Blue Coat ProxyAV (BCP), but other ICAP anti-virus system might work as well. The library is split into 2 versions, 1 written in Java and 1 written in C#. The versions are identical in behavior and more or less identical code-wise too.
 
 The C# version has the addition of a 'FolderWatch' application (also available as a service) that watches for files added to a specified directory. When a new file is found, it is scanned and sorted depending on it's virus-status into 2 different subdirectories.
 
-
+Example of use
+==============
 
 The ICAP Protocol
 =================
 
 Introduction
 ------------
+The __Internet Content Adaption Protocol__ is heavily inspired by HTTP but the use differs on some core aspects. ICAP is normally implemented as an addition to HTTP, where the HTTP request for a web page can be encapsulated and modified before the user gets the content. This way a content filter, like a anti-virus software, can be transparent to the end-user.
+In this project, it is just used as a file transfer protocol with a feedback from the server about the file's virus-status.
 
 Error codes
+When working with the protocol, it often comes in handy to have the error codes and descriptions
 -----------
 | Code | Description                                                                                                                                                           |
 |------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -78,8 +82,6 @@ The example below is fairly simple and involves only scanning 1 file. The scanFi
         }
     }
 
-this is too
-
 Example of Java Version
 -----------------------
 The example below is fairly simple and involves only scanning 1 file. The scanFile() method returns __true__, if the file is __clean__ and __false__ if the file is __infected__.
@@ -138,9 +140,16 @@ Use of FolderWatch
 
 Introduction
 ------------
+The FolderWatch subproject allow a Windows machine to continually scan files in a directory and sort them depending on their virus-status. FolderWatch can be run from a command prompt or as a service. The directory to scan and the subdirectories to sort files into are defined in the __app.config__ file associated.
 
 Setup
 -----
 
+
 Behavior
 --------
+When the FolderWatch application starts, it will add all the current files in the directory to a scan-queue. This list is iterated through when there is open for a new connection. The max amount of connections is specified in the app.config as 'maxInTransfer. The scan-queue limit is defined in app.config as 'maxInQueue'.
+
+Apart from adding all current files in the directory to the scan-queue, it will also watch the directory for created files. When a file is created, it is added to the scan-queue. The maxInQueue limit ensure that system memory is not clogged with waiting files. If the scan-queue is full when a new file is added, it will be ignored.
+
+In the app.config a 'addAllFilesInterval' is defined in milliseconds. When the time has passed, it will added files in the directory to the scan-queue so that they aren't ignored completely.
