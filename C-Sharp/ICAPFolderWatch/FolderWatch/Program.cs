@@ -30,8 +30,18 @@ namespace FolderWatchNameSpace
         private static Queue<String> filesInQueue = new Queue<String>();
         private static List<String> filesInTransfer = new List<String>();
 
+        /// <summary>
+        /// The eventlog to use. If the eventlog is null, stdout will be used instead.
+        /// </summary>
         public static EventLog eventLog;// = new System.Diagnostics.EventLog();
 
+        /// <summary>
+        /// 1. The main method loads all the settings from app.config.
+        /// 2. It creates the required directories for sorting
+        /// 3. It instansiates a FileSystemWatcher to look for created files in the watchDir.
+        /// 4. Triggers and resets the add-all-files timer and starts transfering.
+        /// </summary>
+        /// <param name="args">Not used</param>
         public static void Main(string[] args)
         {
             ///////////////////////////////////////////////////////
@@ -89,6 +99,12 @@ namespace FolderWatchNameSpace
             //Console.ReadKey();
         }
 
+        /// <summary>
+        /// Determines wheter it should log to the system eventlog or to stdout.
+        /// Sends the message to the appropriate place.
+        /// </summary>
+        /// <param name="msg">The message to log</param>
+        /// <param name="debuglvl">The debug level</param>
         private static void logInformation(String msg, int debuglvl = 1)
         {
             if (DEBUGLVL>=debuglvl)
@@ -104,6 +120,12 @@ namespace FolderWatchNameSpace
             }
         }
 
+        /// <summary>
+        /// Determines wheter it should log to the system eventlog or to stdout.
+        /// Sends the message to the appropriate place.
+        /// </summary>
+        /// <param name="msg">The message to log</param>
+        /// <param name="debuglvl">The debug level</param>
         private static void logWarning(String msg)
         {
             if (DEBUGLVL >= 0)
@@ -119,31 +141,50 @@ namespace FolderWatchNameSpace
             }
         }
 
+        /// <summary>
+        /// If more transfers are allowed, it will begin the next in the queue.
+        /// </summary>
         private static void startTransfers()
         {
             while (filesInTransfer.Count < maxInTransfer && filesInQueue.Count != 0)
             {
                 String file = filesInQueue.Dequeue();
-                ThreadPool.QueueUserWorkItem(new WaitCallback(FileCreated), file);
+                ThreadPool.QueueUserWorkItem(new WaitCallback(sendFile), file);
                 filesInTransfer.Add(file); //It has to be added immediatly, or else the same file can get in the ThreadPool twice
             }
         }
 
+        /// <summary>
+        /// If the queue is not full and the file is not already added, the file will be added.
+        /// </summary>
+        /// <param name="file">file to add to queue</param>
         private static void addToQueue(String file)
         {
             if (filesInQueue.Count < maxInQueue && !filesInQueue.Contains(file) && !filesInTransfer.Contains(file))
             {
                 filesInQueue.Enqueue(file);
             }
-            //The addAllFiles should catch the rest of them later
+            //else: The addAllFiles should catch the rest of them later
         }
 
+        /// <summary>
+        /// Enum to help handling Exceptions in a good wway.
+        /// </summary>
         enum ExecuteResult
         {
             CLEAN, INFECTED, ERROR
         }
 
-        private static ExecuteResult TryExecute(Func<bool> func, int timeout)
+        /// <summary>
+        /// Starts a seperate thread and gives it a limited time to finish before it is forced to close.
+        /// This makes sure a file transfer is not hanging.
+        /// Hint: Use an anonymous function for 'func'
+        /// () => someMethod(arg1,arg2,argn)
+        /// </summary>
+        /// <param name="func">The function to run</param>
+        /// <param name="timeout">Timeout in milliseconds</param>
+        /// <returns></returns>
+        private static ExecuteResult timeoutExecute(Func<bool> func, int timeout)
         {
             ExecuteResult result = ExecuteResult.ERROR;
             var thread = new Thread(() =>
@@ -175,6 +216,9 @@ namespace FolderWatchNameSpace
             return result;
         }
 
+        /// <summary>
+        /// Initializes the timer for adding all files perodically
+        /// </summary>
         private static void initAllFilesTimer()
         {
             timer = new System.Timers.Timer();
@@ -183,6 +227,11 @@ namespace FolderWatchNameSpace
             timer.Start();
         }
 
+        /// <summary>
+        /// The method to run when the timer runs out.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private static void timer_Tick(object sender, EventArgs e)
         {
             logInformation("Automatically adding all files",1);
@@ -190,6 +239,10 @@ namespace FolderWatchNameSpace
             startTransfers();
         }
 
+        /// <summary>
+        /// All files in the directory that for some reason is not in the queue already is added.
+        /// </summary>
+        /// <param name="dir"></param>
         private static void addAllFiles(String dir)
         {
             String[] filesInDir = Directory.GetFiles(dir);
@@ -200,8 +253,13 @@ namespace FolderWatchNameSpace
             logInformation("Adding all files!", 2);
         }
 
-        private static void FileCreated(object e)
+        /// <summary>
+        /// Sends a file using the ICAP class in the ICAPNameSpace.
+        /// </summary>
+        /// <param name="e">The file to send</param>
+        private static void sendFile(object e)
         {
+            // Get the current file information
             string fullFilePath = (string)e;
             string dir = Path.GetDirectoryName(fullFilePath) + @"\";
             string file = Path.GetFileName(fullFilePath);
@@ -217,7 +275,7 @@ namespace FolderWatchNameSpace
                 ExecuteResult fileStatus;
                 using (ICAPNameSpace.ICAP icap = new ICAPNameSpace.ICAP("192.168.1.5", 1344, "avscan", 1024))
                 {
-                    fileStatus = TryExecute(() => icap.scanFile(fullFilePath), transferTimeout);
+                    fileStatus = timeoutExecute(() => icap.scanFile(fullFilePath), transferTimeout); //FIXME: What if it is just a VERY large file?
 
                     if (fileStatus == ExecuteResult.CLEAN)
                     {
@@ -234,11 +292,17 @@ namespace FolderWatchNameSpace
                 }
             }
 
+            //removes itself from the queue and starts new transfers.
             filesInTransfer.Remove(fullFilePath);
             startTransfers();
             return;
         }
 
+        /// <summary>
+        /// Checks if a file is locked. In that case it can;t be moved after it is scanned.
+        /// </summary>
+        /// <param name="filename">The file to check</param>
+        /// <returns></returns>
         private static bool IsFileLocked(string filename)
         {
             FileInfo file = new FileInfo(filename);

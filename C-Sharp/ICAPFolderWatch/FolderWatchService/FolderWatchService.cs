@@ -18,6 +18,11 @@ namespace FolderWatchService
 {
     public partial class FolderWatchService : ServiceBase
     {
+        /// <summary>
+        /// If run in a command prompt, it will show the errors, warnings and so on through stdout.
+        /// If run as a Windows service, it will show the errors, warnings and so on in the system event log.
+        /// </summary>
+        /// <param name="args">Not used</param>
         static void Main(string[] args)
         {
             FolderWatchService service = new FolderWatchService();
@@ -35,17 +40,22 @@ namespace FolderWatchService
             }
         }
 
+        /// <summary>
+        /// Initiates the eventlog for logging
+        /// </summary>
         public FolderWatchService()
         {
             InitializeComponent();
-            //this.EventLog = new System.Diagnostics.EventLog();
 
             ServiceName = "FolderWatchService";
-            //EventLog = new System.Diagnostics.EventLog();
             EventLog.Source = ServiceName;
             EventLog.Log = "Application";
         }
 
+        /// <summary>
+        /// Adding a small entry in the log about starting and starts the FolderWatch main method (Not the service main method).
+        /// </summary>
+        /// <param name="args"></param>
         protected override void OnStart(string[] args)
         {
             EventLog.WriteEntry(ServiceName + " starting", EventLogEntryType.Information);
@@ -53,6 +63,9 @@ namespace FolderWatchService
             FolderWatchNameSpace.Program.Main(args);
         }
 
+        /// <summary>
+        /// Adding a small entry in the log about closing.
+        /// </summary>
         protected override void OnStop()
         {
             EventLog.WriteEntry(ServiceName + " stopping", EventLogEntryType.Information);

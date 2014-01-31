@@ -1,0 +1,306 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><style>html { font-size: 100%; overflow-y: scroll; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+
+body{
+  color:#444;
+  font-family:Georgia, Palatino, 'Palatino Linotype', Times, 'Times New Roman',
+              "Hiragino Sans GB", "STXihei", "微软雅黑", serif;
+  font-size:12px;
+  line-height:1.5em;
+  background:#fefefe;
+  width: 45em;
+  margin: 10px auto;
+  padding: 1em;
+  outline: 1300px solid #FAFAFA;
+}
+
+a{ color: #0645ad; text-decoration:none;}
+a:visited{ color: #0b0080; }
+a:hover{ color: #06e; }
+a:active{ color:#faa700; }
+a:focus{ outline: thin dotted; }
+a:hover, a:active{ outline: 0; }
+
+span.backtick {
+  border:1px solid #EAEAEA;
+  border-radius:3px;
+  background:#F8F8F8;
+  padding:0 3px 0 3px;
+}
+
+::-moz-selection{background:rgba(255,255,0,0.3);color:#000}
+::selection{background:rgba(255,255,0,0.3);color:#000}
+
+a::-moz-selection{background:rgba(255,255,0,0.3);color:#0645ad}
+a::selection{background:rgba(255,255,0,0.3);color:#0645ad}
+
+p{
+margin:1em 0;
+}
+
+img{
+max-width:100%;
+}
+
+h1,h2,h3,h4,h5,h6{
+font-weight:normal;
+color:#111;
+line-height:1em;
+}
+h4,h5,h6{ font-weight: bold; }
+h1{ font-size:2.5em; }
+h2{ font-size:2em; border-bottom:1px solid silver; padding-bottom: 5px; }
+h3{ font-size:1.5em; }
+h4{ font-size:1.2em; }
+h5{ font-size:1em; }
+h6{ font-size:0.9em; }
+
+blockquote{
+color:#666666;
+margin:0;
+padding-left: 3em;
+border-left: 0.5em #EEE solid;
+}
+hr { display: block; height: 2px; border: 0; border-top: 1px solid #aaa;border-bottom: 1px solid #eee; margin: 1em 0; padding: 0; }
+
+
+pre , code, kbd, samp { 
+  color: #000; 
+  font-family: monospace; 
+  font-size: 0.88em; 
+  border-radius:3px;
+  background-color: #F8F8F8;
+  border: 1px solid #CCC; 
+}
+pre { white-space: pre; white-space: pre-wrap; word-wrap: break-word; padding: 5px 12px;}
+pre code { border: 0px !important; padding: 0;}
+code { padding: 0 3px 0 3px; }
+
+b, strong { font-weight: bold; }
+
+dfn { font-style: italic; }
+
+ins { background: #ff9; color: #000; text-decoration: none; }
+
+mark { background: #ff0; color: #000; font-style: italic; font-weight: bold; }
+
+sub, sup { font-size: 75%; line-height: 0; position: relative; vertical-align: baseline; }
+sup { top: -0.5em; }
+sub { bottom: -0.25em; }
+
+ul, ol { margin: 1em 0; padding: 0 0 0 2em; }
+li p:last-child { margin:0 }
+dd { margin: 0 0 0 2em; }
+
+img { border: 0; -ms-interpolation-mode: bicubic; vertical-align: middle; }
+
+table { border-collapse: collapse; border-spacing: 0; }
+td { vertical-align: top; }
+
+@media only screen and (min-width: 480px) {
+body{font-size:14px;}
+}
+
+@media only screen and (min-width: 768px) {
+body{font-size:16px;}
+}
+
+@media print {
+  * { background: transparent !important; color: black !important; filter:none !important; -ms-filter: none !important; }
+  body{font-size:12pt; max-width:100%; outline:none;}
+  a, a:visited { text-decoration: underline; }
+  hr { height: 1px; border:0; border-bottom:1px solid black; }
+  a[href]:after { content: " (" attr(href) ")"; }
+  abbr[title]:after { content: " (" attr(title) ")"; }
+  .ir a:after, a[href^="javascript:"]:after, a[href^="#"]:after { content: ""; }
+  pre, blockquote { border: 1px solid #999; padding-right: 1em; page-break-inside: avoid; }
+  tr, img { page-break-inside: avoid; }
+  img { max-width: 100% !important; }
+  @page :left { margin: 15mm 20mm 15mm 10mm; }
+  @page :right { margin: 15mm 10mm 15mm 20mm; }
+  p, h2, h3 { orphans: 3; widows: 3; }
+  h2, h3 { page-break-after: avoid; }
+}
+</style><title>README</title></head><body><!--
+Table of Contents
+=================
+ -->
+
+<h1 id="introduction">Introduction</h1>
+<p>This project is intended to be used with Blue Coat ProxyAV (BCP), but other ICAP anti-virus system might work as well. The library is split into 2 versions, 1 written in Java and 1 written in C#. The versions are identical in behavior and more or less identical code-wise too.</p>
+<p>The C# version has the addition of a 'FolderWatch' application (also available as a service) that watches for files added to a specified directory. When a new file is found, it is scanned and sorted depending on it's virus-status into 2 different subdirectories.</p>
+<h1 id="example-of-use">Example of use</h1>
+<h2 id="case-1">Case 1</h2>
+<p>When a customer/user uploads a file on a web page it can be of any kind. This is a major security risk, if these files aren't virus-scanned. The FolderWatch subproject allows for a automatic scanning of these files and sorts them depending on the security risk. The FolderWatch will send the files individually to a BCP which checks the file and returns an answer.
+As an example, the result of the virus scan can be stored together with the account information of that customer/user to keep track of the files and their status. </p>
+<h1 id="the-icap-protocol">The ICAP Protocol</h1>
+<h2 id="introduction_1">Introduction</h2>
+<p>The <strong>Internet Content Adaption Protocol</strong> is heavily inspired by HTTP but the use differs on some core aspects. ICAP is normally implemented as an addition to HTTP, where the HTTP request for a web page can be encapsulated and modified before the user gets the content. This way, a content filter like a anti-virus software, can be transparent to the end-user.
+In this project, it is just used as a file transfer protocol with a feedback from the server about the file's virus-status.</p>
+<h2 id="error-codes">Error codes</h2>
+<p>When working with the protocol, it often comes in handy to have the error codes and descriptions</p>
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td></td>
+<td><strong>Informational Codes</strong></td>
+</tr>
+<tr>
+<td>100</td>
+<td>Continue After ICAP preview</td>
+</tr>
+<tr>
+<td></td>
+<td><strong>Success codes</strong></td>
+</tr>
+<tr>
+<td>200</td>
+<td>OK</td>
+</tr>
+<tr>
+<td>204</td>
+<td>No modification needed</td>
+</tr>
+<tr>
+<td></td>
+<td><strong>Client error codes</strong></td>
+</tr>
+<tr>
+<td>400</td>
+<td>Bad request</td>
+</tr>
+<tr>
+<td>403</td>
+<td>Forbidden</td>
+</tr>
+<tr>
+<td>404</td>
+<td>ICAP Service not found</td>
+</tr>
+<tr>
+<td>405</td>
+<td>Method not allowed for service</td>
+</tr>
+<tr>
+<td>408</td>
+<td>Request timeout ICAP server gave up waiting for a request from an ICAP client.</td>
+</tr>
+<tr>
+<td></td>
+<td><strong>Server error codes</strong></td>
+</tr>
+<tr>
+<td>500</td>
+<td>Server error. Error on the ICAP server, such as ``out of disk space''.</td>
+</tr>
+<tr>
+<td>501</td>
+<td>Method not implemented. This response is illegal for an OPTIONS request since implementation of OPTIONS is mandatory.</td>
+</tr>
+<tr>
+<td>502</td>
+<td>Bad Gateway. This is an ICAP proxy and proxying produced an error.</td>
+</tr>
+<tr>
+<td>503</td>
+<td>Service overloaded. The ICAP server has exceeded a maximum connection limit associated with this service; the ICAP client should not exceed this limit in the future.</td>
+</tr>
+<tr>
+<td>505</td>
+<td>ICAP version not supported by server.</td>
+</tr>
+</tbody>
+</table>
+<h1 id="use-of-the-libraries">Use of The Libraries</h1>
+<h2 id="introduction_2">Introduction</h2>
+<p>Both versions have the same interface of public and private methods. Although they are not equal in the way of handling exceptions.
+Both versions will disconnect automatically when caught by the garbage collection.
+The ICAP class is <strong>NOT</strong> thread-safe. If you have to transfer more than one file at a time, then instantiate the ICAP class for each connection.</p>
+<h2 id="example-of-c-version">Example of C# Version</h2>
+<p>The example below is fairly simple and involves only scanning 1 file. The scanFile() method returns <strong>true</strong>, if the file is <strong>clean</strong> and <strong>false</strong> if the file is <strong>infected</strong>.</p>
+<pre><code>class Program
+{
+    static void Main(string[] args)
+    {
+        try
+        {
+            // Starts a connection to the ICAP server
+            ICAPNameSpace.ICAP icap = new ICAPNameSpace.ICAP("192.168.1.5",1344,"avscan");
+            try
+            {
+                string file = @"C:\foo\bar.exe";
+                Console.Write(file + ": ");
+
+                // Sends the file for scanning and the result is stored in 'result'
+                bool result = icap.scanFile(file);
+                Console.WriteLine(result);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Could not scan file " + file + ":" + e);
+            }
+        }
+        catch(Exception e)
+        {
+            Console.WriteLine("Error occurred when connecting" + e);
+        }
+    }
+}
+</code></pre>
+<h2 id="example-of-java-version">Example of Java Version</h2>
+<p>The example below is fairly simple and involves only scanning 1 file. The scanFile() method returns <strong>true</strong>, if the file is <strong>clean</strong> and <strong>false</strong> if the file is <strong>infected</strong>.</p>
+<pre><code>public class Tester
+{
+    public static void main(String[] args)
+    {
+        try
+        {
+            // Starts a connection to the ICAP server
+            ICAP icap = new ICAP("192.168.1.5",1344,"avscan");
+            try
+            {
+                String file = "\foo\bar.txt"
+                System.out.print(file + ": ");
+
+                // Sends the file for scanning and the result is stored in 'result'
+                boolean result = icap.scanFile(file);
+                System.out.println(result);
+            }
+            catch (Exception e) {
+                System.out.println("Could not scan file " + file + ": " + e.getMessage());
+            }
+        }
+        catch(Exception e){
+            System.out.println("Error occurred when connecting" + e.getMessage());
+        }
+   }
+}
+</code></pre>
+<h2 id="public-java-methods">Public Java methods</h2>
+<h3 id="icap-string-ip-int-port-string-icap-service">ICAP(String <strong>IP</strong>, int <strong>port</strong>, String <strong>ICAP service</strong>)</h3>
+<p>Given an IP-address, a port and an ICAP service name it will initialize a socket connection to the BCP. The preview size will be determined by an 'option' request from the BCP.
+This method throws an IOException if the socket connection or IO streams cannot be started. This lets the user of the class responsible for making a decision if such an error occurs. There is no good way to solve this exception automatically.</p>
+<h3 id="icap-string-ip-int-port-string-icap-service-int-preview-size">ICAP(String <strong>IP</strong>, int <strong>port</strong>, String <strong>ICAP service</strong>, int <strong>preview size</strong>)</h3>
+<p>Same as the one above, but the preview size assigned in the method call will be used to transfer files. Use this method to minimize overhead, but be sure to not change the BCP settings.</p>
+<h3 id="scanfile-string-filename">scanFile(String <strong>filename</strong>)</h3>
+<p>Given a filename, it will send the given file through the initialized connection to the BCP. If the file is <strong>clean</strong> it will return <strong>true</strong> and if the file is <strong>infected</strong> it will return <strong>false</strong>.</p>
+<h2 id="public-c-methods">Public C# methods</h2>
+<p><em>Exceptions?</em></p>
+<h3 id="icap-string-ip-int-port-string-icap-service-int-preview-size-optional-parameter">ICAP(String <strong>IP</strong>, int <strong>port</strong>, String <strong>ICAP service</strong>, int <strong>preview size (optional parameter)</strong>)</h3>
+<p>Given an IP-address, a port, an ICAP service name and <strong>optionally</strong> an preview size it will initialize a socket connection to the BCP. If the preview size is assigned in the method call it will be used to transfer files. Use this method to minimize overhead, but be sure to not change the BCP settings. If the preview size is <strong>not</strong> assigned, the preview size will be determined by an 'option' request from the BCP.</p>
+<h3 id="scanfile-string-filename_1">scanFile(String <strong>filename</strong>)</h3>
+<p>Given a filename, it will send the given file through the initialized connection to the BCP. If the file is <strong>clean</strong> it will return <strong>true</strong> and if the file is <strong>infected</strong> it will return <strong>false</strong>.</p>
+<h1 id="use-of-folderwatch">Use of FolderWatch</h1>
+<h2 id="introduction_3">Introduction</h2>
+<p>The FolderWatch subproject allow a Windows machine to continually scan files in a directory and sort them depending on their virus-status. FolderWatch can be run from a command prompt or as a service. The directory to scan and the subdirectories to sort files into are defined in the <strong>app.config</strong> file associated.</p>
+<h2 id="setup">Setup</h2>
+<h2 id="behavior">Behavior</h2>
+<p>When the FolderWatch application starts, it will add all the current files in the directory to a scan-queue. This list is iterated through when there is open for new connections. The max amount of connections is specified in the app.config as 'maxInTransfer'. The scan-queue limit is defined in app.config as 'maxInQueue'.</p>
+<p>Apart from adding all current files in the directory to the scan-queue, it will also watch the directory for created files. When a file is created, it is added to the scan-queue. The maxInQueue limit ensure that system memory is not clogged with waiting files. If the scan-queue is full when a new file is added, it will be ignored.</p>
+<p>In the app.config a 'addAllFilesInterval' is defined in milliseconds. When the time has passed, it will added files in the directory to the scan-queue so that they aren't ignored completely.</p>
+<p>The console application will print out to the command prompt with informations, error and so on. Alternatively, if it is installed as a service, it will send all messages to the system's event log.</p></body></html>
