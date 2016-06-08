@@ -11,8 +11,6 @@ The C# version has the addition of a 'FolderWatch' application (also available a
 
 Please tell me, if any errors come up. I don't have access to any ICAP device anymore, so nothing gets fixed, unless it gets reported.
 
-Also, fair warning: The code might not be idiomatic C# or Java code. It was tested to work and seemed stable at the time of development.
-
 Example of use
 ==============
 
