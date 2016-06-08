@@ -5,7 +5,7 @@ Table of Contents
 
 Caution!
 ========
-This is the first C# code I've ever written and the largest Java code at the time. It might not be idiomatic C# or Java code. Although it was tested to work at the time of writting, I can't guareentee, that it still works. Feel free to create an issue or pull request.
+This is the first C# code I've ever written and my largest Java code at the time. It might not be idiomatic C# or Java code. Although it was tested to work at the time of writting, I can't guareentee, that it still works. Feel free to create an issue or pull request.
 
 Introduction
 ============
