@@ -3,6 +3,10 @@ Table of Contents
 =================
  -->
 
+Caution!
+========
+This is the first C# code I've ever written and the largest Java code at the time. It might not be idiomatic C# or Java code. Although it was tested to work at the time of writting, I can't guareentee, that it still works. Feel free to create an issue or pull request.
+
 Introduction
 ============
 This project is intended to be used with Blue Coat ProxyAV (BCP), but other ICAP anti-virus system might work as well. The library is split into 2 versions, 1 written in Java and 1 written in C#. The versions are identical in behavior and more or less identical code-wise too.
