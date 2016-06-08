@@ -3,15 +3,15 @@ Table of Contents
 =================
  -->
 
-Caution!
-========
-This is the first C# code I've ever written and my largest Java code at the time. It might not be idiomatic C# or Java code. Although it was tested to work at the time of writting, I can't guareentee, that it still works. Feel free to create an issue or pull request.
-
 Introduction
 ============
 This project is intended to be used with Blue Coat ProxyAV (BCP), but other ICAP anti-virus system might work as well. The library is split into 2 versions, 1 written in Java and 1 written in C#. The versions are identical in behavior and more or less identical code-wise too.
 
 The C# version has the addition of a 'FolderWatch' application (also available as a service) that watches for files added to a specified directory. When a new file is found, it is scanned and sorted depending on it's virus-status into 2 different subdirectories.
+
+Please tell me, if any errors come up. I don't have access to any ICAP device anymore, so nothing gets fixed, unless it gets reported.
+
+Also, fair warning: The code might not be idiomatic C# or Java code. It was tested to work and seemed stable at the time of development.
 
 Example of use
 ==============
