@@ -35,6 +35,7 @@ class ICAP {
 
     private String tempString;
     
+    
     /**
      * Initializes the socket connection and IO streams. It asks the server for the available options and
      * changes settings to match it.
@@ -117,42 +118,56 @@ class ICAP {
      * @param filename Relative or absolute filepath to a file.
      * @return Returns true when no infection is found.
      */
-    public boolean scanFile(String filename) throws IOException,ICAPException{
+    public boolean scanFile(String fileName) throws IOException,ICAPException{
         
         //Differs from C# version. it uses a using statement for the filestream
         // If Java 7 is accepted, then use try(FileInputStream fileInStream = new FileInputStream(file)){}
+    	
         FileInputStream fileInStream = null;
-
+        
         try {
-            File file = new File(filename);
+            File file = new File(fileName);
             fileInStream = new FileInputStream(file);
+            
             int fileSize = fileInStream.available();
 
             //First part of header
-            String resBody = "Content-Length: "+fileSize+"\r\n\r\n";
-
+            
             int previewSize = stdPreviewSize;
             if (fileSize < stdPreviewSize){
                 previewSize = fileSize;
             }
-
+            
+            byte[] chunk = new byte[previewSize];
+            fileInStream.read(chunk);
+            
+            String resBody = "HTTP/1.1 200 OK\r\n"
+            		+"Content-Length: "+chunk.length+"\r\n\r\n";
+            		
+            String httpRequest  = "GET /"+fileName+" HTTP/1.1\r\n"            
+            		+"Host: icap.health.check\r\n\r\n";
+            
             String requestBuffer = 
-                "RESPMOD icap://"+serverIP+"/"+icapService+" ICAP/"+VERSION+"\r\n"
+                "RESPMOD icap://"+serverIP+"/"+icapService+" ICAP/1.0\r\n"
                 +"Host: "+serverIP+"\r\n"
-                +"User-Agent: "+USERAGENT+"\r\n"
-                +"Allow: 204\r\n"
+                +"X-Client-Abandon-Supported: 1\r\n"
                 +"Preview: "+previewSize+"\r\n"
-                +"Encapsulated: res-hdr=0, res-body="+resBody.length()+"\r\n"
+                +"X-Scan-Progress-Interval: 10\r\n"
+                +"Allow: 204\r\n"                
+                +"Encapsulated: req-hdr=0, res-hdr="+httpRequest.getBytes(StandardCharsetsUTF8).length+", res-body="+(httpRequest.getBytes(StandardCharsetsUTF8).length+resBody.getBytes(StandardCharsetsUTF8).length)+"\r\n"
                 +"\r\n"
-                +resBody
-                +Integer.toHexString(previewSize) +"\r\n";
+                +httpRequest //HTTP Request of file to server
+                +resBody //Encapsulate and dimensions of file
+                +Integer.toHexString(chunk.length)+"\r\n";//Hex number of Bytes sends
             
             sendString(requestBuffer);
-
+            /*req-hdr=0 means the "GET /eicar.com HTTP/1.1"   starts at 0 bytes right after the ICAP header.
+             * res-hdr=84 means the HTTP/1.1 200 OK starts at 84 bytes after the ICAP header.
+             * res-body=150 means the Response body starts at 150 bytes after the ICAP header.
+             */
+            
             //Sending preview or, if smaller than previewSize, the whole file.
-            byte[] chunk = new byte[previewSize];
-
-            fileInStream.read(chunk);
+            
             sendBytes(chunk);
             sendString("\r\n");
             if (fileSize<=previewSize){
@@ -171,7 +186,7 @@ class ICAP {
             if (fileSize>previewSize){
                 String parseMe = getHeader(ICAPTERMINATOR);
                 responseMap = parseHeader(parseMe);
-
+                
                 tempString = responseMap.get("StatusCode");
                 if (tempString != null){
                     status = Integer.parseInt(tempString);
@@ -188,6 +203,7 @@ class ICAP {
 
             //Sending remaining part of file
             if (fileSize > previewSize){
+            	
                 byte[] buffer = new byte[stdSendLength];
                 while ((fileInStream.read(buffer)) != -1) {
                     sendString(Integer.toHexString(buffer.length) +"\r\n");
@@ -203,15 +219,21 @@ class ICAP {
             responseMap.clear();
             String response = getHeader(ICAPTERMINATOR);
             responseMap = parseHeader(response);
-
+            
             tempString=responseMap.get("StatusCode");
             if (tempString != null){
+            	
                 status = Integer.parseInt(tempString);
 
                 if (status == 204){return true;} //Unmodified
 
                 if (status == 200){ //OK - The ICAP status is ok, but the encapsulated HTTP status will likely be different
                     response = getHeader(HTTPTERMINATOR);
+                    
+                    //Find the status of second response
+                    responseMap = parseHeader(response);
+                    tempString=responseMap.get("StatusCode");
+                    
                     int x = response.indexOf("<title>",0);
                     int y = response.indexOf("</title>",x);
                     String statusCode = response.substring(x+7,y);
@@ -219,6 +241,11 @@ class ICAP {
                     if (statusCode.equals("ProxyAV: Access Denied")){
                         return false;
                     }
+                    //File Blocked
+                    if (Integer.parseInt(tempString) == 403){
+                        return false;
+                    }
+                    
                 }
             }
             throw new ICAPException("Unrecognized or no status code in response header.");
@@ -258,6 +285,7 @@ class ICAP {
      * @throws IOException
      * @throws ICAPException 
      */
+    
     private String getHeader(String terminator) throws IOException, ICAPException{
         byte[] endofheader = terminator.getBytes(StandardCharsetsUTF8);
         byte[] buffer = new byte[stdRecieveLength];
