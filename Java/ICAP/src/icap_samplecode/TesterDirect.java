@@ -3,23 +3,28 @@ package icap_samplecode;
 import java.io.IOException;
 
 
-public class Tester {
-    public  boolean escanearArchivo(String file)
+public class TesterDirect {
+    public static void main(String[] args)
     {
-    	boolean result=false;
-        try{            
-            	ICAP icap = new ICAP("127.0.0.1",1344,"resp");
+        try{
+        	 ICAP icap = new ICAP("93.16.212.37",1344,"resp");
+        	//Malware test downloadable from http://www.eicar.org/85-0-Download.html
+        	 
+        	 String[] files = new String[]{
+     			"C:\\Something.txt","C:\\eicarzip.zip","C:\\Something2.txt"
+     		};
+            
+            for(String file : files) {
                 try {
                     System.out.print(file + ": ");
-                    result = icap.scanFile(file);
-                    System.out.println(result? "Clean" : "Infected");
+                    boolean result = icap.scanFile(file);
+                    System.out.println(result ? "Clean" : "Infected");
                 } catch (ICAPException ex) {
                     System.err.println("Could not scan file " + file + ": " + ex.getMessage());
                 } catch (IOException ex) {
                     System.err.println("IO error occurred when scanning file " + file + ": " + ex.getMessage());
                 }
-            
-            
+            }
         }
         catch(IOException e){
         	System.out.println("this");
@@ -29,7 +34,6 @@ public class Tester {
         	System.out.println("these");
             System.out.println(e.getMessage());
         }
-        return result;
+        
    }
-    
 }
