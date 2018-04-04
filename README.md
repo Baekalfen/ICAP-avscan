@@ -130,26 +130,30 @@ The example below is fairly simple and involves only scanning 1 file. The scanFi
 Public Java methods
 ------------
 
-###ICAP(String __IP__, int __port__, String __ICAP service__)
+`ICAP(String __IP__, int __port__, String __ICAP service__)`
+
 Given an IP-address, a port and an ICAP service name it will initialize a socket connection to the BCP. The preview size will be determined by an 'option' request from the BCP.
 This method throws an IOException if the socket connection or IO streams cannot be started. This lets the user of the class responsible for making a decision if such an error occurs. There is no good way to solve this exception automatically.
 
-###ICAP(String __IP__, int __port__, String __ICAP service__, int __preview size__)
+`ICAP(String __IP__, int __port__, String __ICAP service__, int __preview size__)`
+
 Same as the one above, but the preview size assigned in the method call will be used to transfer files. Use this method to minimize overhead, but be sure to not change the BCP settings.
 
-###scanFile(String __filename__)
+`scanFile(String __filename__)`
+
 Given a filename, it will send the given file through the initialized connection to the BCP. If the file is __clean__ it will return __true__ and if the file is __infected__ it will return __false__.
 
 
 Public C# methods
 ----------
 
-_Exceptions?_
 
-###ICAP(String __IP__, int __port__, String __ICAP service__, int __preview size (optional parameter)__)
+`ICAP(String __IP__, int __port__, String __ICAP service__, int __preview size (optional parameter)__)`
+
 Given an IP-address, a port, an ICAP service name and __optionally__ an preview size it will initialize a socket connection to the BCP. If the preview size is assigned in the method call it will be used to transfer files. Use this method to minimize overhead, but be sure to not change the BCP settings. If the preview size is __not__ assigned, the preview size will be determined by an 'option' request from the BCP.
 
-###scanFile(String __filename__)
+`scanFile(String __filename__)`
+
 Given a filename, it will send the given file through the initialized connection to the BCP. If the file is __clean__ it will return __true__ and if the file is __infected__ it will return __false__.
 
 Use of FolderWatch
