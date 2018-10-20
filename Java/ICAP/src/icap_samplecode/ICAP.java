@@ -36,6 +36,7 @@ class ICAP {
     private int stdPreviewSize;
 
     private String tempString;
+    private String originalFilename;
     
     /**
      * Initializes the socket connection and IO streams. It asks the server for the available options and
@@ -117,6 +118,7 @@ class ICAP {
      */
     public boolean scanFile(String filename) throws IOException,ICAPException{
         File file = new File(filename);
+        originalFilename= file.getName();
         try(InputStream inputStream = new FileInputStream(file)) {
             return scanFile(inputStream, file.length());
         }
