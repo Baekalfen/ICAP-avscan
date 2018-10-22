@@ -36,6 +36,7 @@ class ICAP {
     private int stdPreviewSize;
 
     private String tempString;
+    private String originalFilename;
     
     /**
      * Initializes the socket connection and IO streams. It asks the server for the available options and
@@ -117,15 +118,17 @@ class ICAP {
      */
     public boolean scanFile(String filename) throws IOException,ICAPException{
         File file = new File(filename);
+        originalFilename= file.getName();
         try(InputStream inputStream = new FileInputStream(file)) {
             return scanFile(inputStream, file.length());
         }
     }
 
     public boolean scanFile(InputStream fileInStream, long fileSize) throws IOException,ICAPException{
-        
-        //First part of header
-        String resBody = "Content-Length: "+fileSize+"\r\n\r\n";
+
+        // First part of header
+        String resHeader= "GET /" + originalFilename + " HTTP/1.1\r\nHost: " + serverIP + ":" + port + "\r\n\r\n";
+        String resBody = resHeader + "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\nContent-Length: "+fileSize+"\r\n\r\n";
 
         int previewSize = stdPreviewSize;
         if (fileSize < stdPreviewSize){
@@ -135,10 +138,11 @@ class ICAP {
         String requestBuffer =
             "RESPMOD icap://"+serverIP+"/"+icapService+" ICAP/"+VERSION+"\r\n"
             +"Host: "+serverIP+"\r\n"
+            +"Connection:  close\r\n"
             +"User-Agent: "+USERAGENT+"\r\n"
             +"Allow: 204\r\n"
             +"Preview: "+previewSize+"\r\n"
-            +"Encapsulated: res-hdr=0, res-body="+resBody.length()+"\r\n"
+            +"Encapsulated: req-hdr=0, res-hdr=" + resHeader.length() + ", res-body="+resBody.length()+"\r\n"
             +"\r\n"
             +resBody
             +Integer.toHexString(previewSize) +"\r\n";
