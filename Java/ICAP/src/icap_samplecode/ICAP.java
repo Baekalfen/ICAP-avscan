@@ -14,7 +14,7 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.HashMap;
 
-class ICAP {
+class ICAP implements Closeable {
     private static final Charset StandardCharsetsUTF8 = Charset.forName("UTF-8");
     private static final int BUFFER_SIZE = 32 * 1024;
     private static final int STD_RECIEVE_LENGTH = 8192;
@@ -345,23 +345,11 @@ class ICAP {
             out.write(aChunk);
         }
     }
-    
-    /**
-     * Terminates the socket connecting to the ICAP server.
-     * @throws IOException 
-     */
-    private void disconnect() throws IOException{
-        if(client != null) {
-            client.close();
-        }
-    }
-    
+
     @Override
-    protected void finalize() throws Throwable {
-        try {
-            disconnect();
-        } finally {
-            super.finalize();
+    public void close() throws IOException {
+        if (this.client != null) {
+            this.client.close();
         }
     }
 }
