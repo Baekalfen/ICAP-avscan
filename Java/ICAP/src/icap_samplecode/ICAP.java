@@ -1,13 +1,6 @@
 package icap_samplecode;
 
-import java.io.BufferedOutputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.Socket;
 import java.nio.charset.Charset;
 import java.util.Arrays;
@@ -17,7 +10,7 @@ import java.util.HashMap;
 class ICAP implements Closeable {
     private static final Charset StandardCharsetsUTF8 = Charset.forName("UTF-8");
     private static final int BUFFER_SIZE = 32 * 1024;
-    private static final int STD_RECIEVE_LENGTH = 8192;
+    private static final int STD_RECEIVE_LENGTH = 8192;
     private static final int STD_SEND_LENGTH = 8192;
     private static final String VERSION   = "1.0";
     private static final String USERAGENT = "IT-Kartellet ICAP Client/1.1";
@@ -37,7 +30,7 @@ class ICAP implements Closeable {
 
     private String tempString;
     private String originalFilename;
-    
+
     /**
      * Initializes the socket connection and IO streams. It asks the server for the available options and
      * changes settings to match it.
@@ -45,7 +38,7 @@ class ICAP implements Closeable {
      * @param port The port in the host to use.
      * @param icapService The service to use (fx "avscan").
      * @throws IOException
-     * @throws ICAPException 
+     * @throws ICAPException
      */
     public ICAP(String serverIP, int port, String icapService) throws IOException, ICAPException{
         this.icapService = icapService;
@@ -61,7 +54,7 @@ class ICAP implements Closeable {
         //Openening in stream
         InputStream inFromServer = client.getInputStream();
         in = new DataInputStream(inFromServer);
-        
+
         String parseMe = getOptions();
         Map<String,String> responseMap = parseHeader(parseMe);
 
@@ -81,7 +74,7 @@ class ICAP implements Closeable {
             throw new ICAPException("Could not get options from server");
         }
     }
-    
+
     /**
      * Initializes the socket connection and IO streams. This overload doesn't
      * use getOptions(), instead a previewSize is specified.
@@ -90,26 +83,26 @@ class ICAP implements Closeable {
      * @param icapService The service to use (fx "avscan").
      * @param previewSize Amount of bytes to  send as preview.
      * @throws IOException
-     * @throws ICAPException 
+     * @throws ICAPException
      */
     public ICAP(String s,int p, String icapService, int previewSize) throws IOException, ICAPException{
         this.icapService = icapService;
         serverIP = s;
-        port = p;        
+        port = p;
         //Initialize connection
         client = new Socket(serverIP, port);
 
-        //Openening out stream
+        //Opening out stream
         OutputStream outToServer = client.getOutputStream();
         out = new DataOutputStream(outToServer);
 
-        //Openening in stream
+        //Opening in stream
         InputStream inFromServer = client.getInputStream();
         in = new DataInputStream(inFromServer);
-        
+
         stdPreviewSize = previewSize;
     }
-    
+
     /**
      * Given a filepath, it will send the file to the server and return true,
      * if the server accepts the file. Visa-versa, false if the server rejects it.
@@ -222,17 +215,17 @@ class ICAP implements Closeable {
         }
         throw new ICAPException("Unrecognized or no status code in response header.");
     }
-    
+
     /**
      * Automatically asks for the servers available options and returns the raw response as a String.
      * @return String of the servers response.
      * @throws IOException
-     * @throws ICAPException 
+     * @throws ICAPException
      */
     private String getOptions() throws IOException, ICAPException{
         //Send OPTIONS header and receive response
         //Sending and recieving
-        String requestHeader = 
+        String requestHeader =
                   "OPTIONS icap://"+serverIP+"/"+icapService+" ICAP/"+VERSION+"\r\n"
                 + "Host: "+serverIP+"\r\n"
                 + "User-Agent: "+USERAGENT+"\r\n"
@@ -243,22 +236,22 @@ class ICAP implements Closeable {
 
         return getHeader(ICAPTERMINATOR);
     }
-    
+
     /**
      * Receive an expected ICAP header as response of a request. The returned String should be parsed with parseHeader()
      * @param terminator
      * @return String of the raw response
      * @throws IOException
-     * @throws ICAPException 
+     * @throws ICAPException
      */
     private String getHeader(String terminator) throws IOException, ICAPException{
         byte[] endofheader = terminator.getBytes(StandardCharsetsUTF8);
-        byte[] buffer = new byte[STD_RECIEVE_LENGTH];
+        byte[] buffer = new byte[STD_RECEIVE_LENGTH];
 
         int n;
         int offset=0;
-        //STD_RECIEVE_LENGTH-offset is replaced by '1' to not receive the next (HTTP) header.
-        while((offset < STD_RECIEVE_LENGTH) && ((n = in.read(buffer, offset, 1)) != -1)) { // first part is to secure against DOS
+        //STD_RECEIVE_LENGTH-offset is replaced by '1' to not receive the next (HTTP) header.
+        while((offset < STD_RECEIVE_LENGTH) && ((n = in.read(buffer, offset, 1)) != -1)) { // first part is to secure against DOS
             offset += n;
             if (offset>endofheader.length+13){ // 13 is the smallest possible message "ICAP/1.0 xxx "
                 byte[] lastBytes = Arrays.copyOfRange(buffer, offset-endofheader.length, offset);
@@ -269,7 +262,7 @@ class ICAP implements Closeable {
         }
         throw new ICAPException("Error in getHeader() method");
     }
-    
+
     /**
      * Given a raw response header as a String, it will parse through it and return a HashMap of the result
      * @param response A raw response header as a String.
@@ -290,8 +283,8 @@ class ICAP implements Closeable {
         int y = response.indexOf(" ",x+1);
         String statusCode = response.substring(x+1,y);
         headers.put("StatusCode", statusCode);
-        
-        // Each line in the sample is ended with "\r\n". 
+
+        // Each line in the sample is ended with "\r\n".
         // When (i+2==response.length()) The end of the header have been reached.
         // The +=2 is added to skip the "\r\n".
         // Read headers
@@ -334,11 +327,11 @@ class ICAP implements Closeable {
             out.flush();
         }
     }
-    
+
     /**
      * Sends bytes of data from a byte-array through the socket connection. Used to send filedata.
      * @param chunk The byte-array to send.
-     * @throws IOException 
+     * @throws IOException
      */
     private void sendBytes(byte[] chunk) throws IOException{
         for (byte aChunk : chunk) {
