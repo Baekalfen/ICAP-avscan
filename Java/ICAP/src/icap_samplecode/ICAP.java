@@ -3,12 +3,13 @@ package icap_samplecode;
 import java.io.*;
 import java.net.Socket;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.HashMap;
 
 class ICAP implements Closeable {
-    private static final Charset StandardCharsetsUTF8 = Charset.forName("UTF-8");
+    private static final Charset StandardCharsetsUTF8 = StandardCharsets.UTF_8;
     private static final int BUFFER_SIZE = 32 * 1024;
     private static final int STD_RECEIVE_LENGTH = 8192;
     private static final int STD_SEND_LENGTH = 8192;
@@ -224,7 +225,7 @@ class ICAP implements Closeable {
      */
     private String getOptions() throws IOException, ICAPException{
         //Send OPTIONS header and receive response
-        //Sending and recieving
+        //Sending and receiving
         String requestHeader =
                   "OPTIONS icap://"+serverIP+"/"+icapService+" ICAP/"+VERSION+"\r\n"
                 + "Host: "+serverIP+"\r\n"
@@ -245,7 +246,7 @@ class ICAP implements Closeable {
      * @throws ICAPException
      */
     private String getHeader(String terminator) throws IOException, ICAPException{
-        byte[] endofheader = terminator.getBytes(StandardCharsetsUTF8);
+        byte[] endOfHeader = terminator.getBytes(StandardCharsetsUTF8);
         byte[] buffer = new byte[STD_RECEIVE_LENGTH];
 
         int n;
@@ -253,9 +254,9 @@ class ICAP implements Closeable {
         //STD_RECEIVE_LENGTH-offset is replaced by '1' to not receive the next (HTTP) header.
         while((offset < STD_RECEIVE_LENGTH) && ((n = in.read(buffer, offset, 1)) != -1)) { // first part is to secure against DOS
             offset += n;
-            if (offset>endofheader.length+13){ // 13 is the smallest possible message "ICAP/1.0 xxx "
-                byte[] lastBytes = Arrays.copyOfRange(buffer, offset-endofheader.length, offset);
-                if (Arrays.equals(endofheader,lastBytes)){
+            if (offset>endOfHeader.length+13){ // 13 is the smallest possible message "ICAP/1.0 xxx "
+                byte[] lastBytes = Arrays.copyOfRange(buffer, offset-endOfHeader.length, offset);
+                if (Arrays.equals(endOfHeader,lastBytes)){
                     return new String(buffer,0,offset, StandardCharsetsUTF8);
                 }
             }
