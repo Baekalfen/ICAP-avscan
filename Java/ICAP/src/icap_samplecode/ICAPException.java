@@ -1,8 +1,8 @@
 package icap_samplecode;
 
-public class ICAPException extends Exception { 
+public class ICAPException extends Exception {
 
-    public ICAPException(String message) {
-        super(message);
-    }
+	public ICAPException(String message) {
+		super(message);
+	}
 }
