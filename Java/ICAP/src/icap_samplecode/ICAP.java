@@ -2,7 +2,9 @@ package icap_samplecode;
 
 import java.io.*;
 import java.net.Socket;
+import java.net.URLEncoder;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.HashMap;
@@ -120,7 +122,7 @@ class ICAP implements Closeable {
     public boolean scanFile(InputStream fileInStream, long fileSize) throws IOException,ICAPException{
 
         // First part of header
-        String resHeader= "GET /" + originalFilename + " HTTP/1.1\r\nHost: " + serverIP + ":" + port + "\r\n\r\n";
+        String resHeader= "GET /" + URLEncoder.encode(originalFilename, StandardCharsets.UTF_8.name()) + " HTTP/1.1\r\nHost: " + serverIP + ":" + port + "\r\n\r\n";
         String resBody = resHeader + "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\nContent-Length: "+fileSize+"\r\n\r\n";
 
         int previewSize = stdPreviewSize;
