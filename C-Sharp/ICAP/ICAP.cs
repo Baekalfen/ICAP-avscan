@@ -178,8 +178,8 @@ namespace ICAPNameSpace
                     while ((n = fileStream.Read(buffer, 0, stdSendLength)) > 0)
                     {
                         offset += n;  // offset for next reading
-                        sender.Send(Encoding.ASCII.GetBytes(buffer.Length.ToString("X") + "\r\n"));
-                        sender.Send(buffer);
+                        sender.Send(Encoding.ASCII.GetBytes(n.ToString("X") + "\r\n"));
+                        sender.Send(buffer, 0, n, SocketFlags.None);
                         sender.Send(Encoding.ASCII.GetBytes("\r\n"));
                     }
                     //Closing file transfer.
